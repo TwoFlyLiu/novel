@@ -30,6 +30,9 @@ type Extracter interface {
 	// 返回以[[url1, menu1], [ur2, menu2], ...]形式返回
 	ExtractMenuList(fullPage string) [][]string
 
+	// 从fullPage中提取出小说的描述信息
+	ExtractNovelDescription(fullPage string) string
+
 	// 从menuPage中提取出小说图标的URL
 	ExtractIconURL(menuPage string) string
 
