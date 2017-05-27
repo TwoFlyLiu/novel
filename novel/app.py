@@ -1,10 +1,13 @@
 #! /usr/bin/env python3
 import logging
 import config
+import os
 
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
+
+THIS_SCRIPT_DIRNAME =  os.path.dirname(os.path.abspath(__file__))
 
 class DownloadWidget(Gtk.ScrolledWindow):
     """download widget represent download page
@@ -126,7 +129,7 @@ class MainWindow:
     def __init__(self):
         logging.info("parse glade file '%s'..." %'./app.glade')
         builder = Gtk.Builder()
-        builder.add_from_file("./app.glade")
+        builder.add_from_file(os.path.join(THIS_SCRIPT_DIRNAME, "app.glade"))
         builder.connect_signals(self)
 
         self._init_controls(builder)
@@ -202,8 +205,10 @@ class MainWindow:
                 self.search_widget.hide()
                 self.download_widget.switch(name)
 
+
 def main():
     config.config()
+
     win = MainWindow()
     win.show()
 
