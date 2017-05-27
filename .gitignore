@@ -1,0 +1,10 @@
+# Python:
+*.py[cod]
+*.so
+*.egg
+*.egg-info
+__pycache__
+
+# My
+NovelEngine.xmind
+*.glade~
