@@ -8,6 +8,9 @@ import (
 	"io/ioutil"
 	"net/url"
 	"strings"
+	"time"
+
+	"github.com/op/go-logging"
 )
 
 const (
@@ -22,15 +25,18 @@ const (
 type Engine struct {
 	downloader Downloader //An object that implements Downloader interface. It is a aggregated object and mainly provide download function from  internet
 	dao        NovelDao   //An object that implements NovelDao interface. It is a aggreated object and mainy provide serialize novel function
+	threshold  int64      //The max time of extract baseinfo. If actually extracting time more thant threshold, search item will be removed
 }
 
 //NewEngine is a factory function used to create Engine object
 //downloader - an implementation of Downloader
 //dao - an implementation of NovelDao
 //verbose - enable debug information
-func NewEngine(downloader Downloader, dao NovelDao, verbose bool) *Engine {
+//threshold - threshold time
+func NewEngine(downloader Downloader, dao NovelDao, verbose bool, threshold int64) *Engine {
 	configLog(verbose) //配置日志
-	return &Engine{downloader: downloader, dao: dao}
+	GlobalSiteSearcher.loadIgnoredHosts()
+	return &Engine{downloader: downloader, dao: dao, threshold: threshold}
 }
 
 //NewDefaultEngine is a handy factory function.It produces a thread-safe object, which uses the HttpDownloader object and
@@ -39,7 +45,12 @@ func NewEngine(downloader Downloader, dao NovelDao, verbose bool) *Engine {
 //verbose - enable debug information
 func NewDefaultEngine(verbose bool) *Engine {
 	return NewEngine(NewDefaultDownloader(),
-		NewJsonNovelDao(), verbose)
+		NewJsonNovelDao(), verbose, 1)
+}
+
+//Set threshold time of extract base info from url in second
+func (engine *Engine) SetThreshold(threshold int64) {
+	engine.threshold = threshold
 }
 
 //NovelByName - Use the novel name to download the content of novel from internet
@@ -111,26 +122,45 @@ func (engine *Engine) NovelByURL(url string) (novel *Novel, err error) {
 // url - the url of novel menu page, which is achieved by call SearchSite method
 // novel - finally base information and the field of Chapters is invalid in novel.
 // err - may contain error message
-func (engine *Engine) BaseInfoByURL(url string) (novel *Novel, err error) {
-	extracter := AutoSelectExtracter(url)
+func (engine *Engine) BaseInfoByURL(netURL string) (novel *Novel, iconURL string, err error) {
+	addr, err := url.Parse(netURL)
+	CheckError(err)
+
+	start := time.Now().Unix()
+	extracter := AutoSelectExtracter(netURL)
 	if extracter == nil {
-		err = fmt.Errorf("%q extracter not implemented", url)
+		err = fmt.Errorf("%q extracter not implemented", netURL)
 		return
 	}
 
 	novel = new(Novel)
 
-	menuURL := extracter.ExtractMenuURL(url)
+	menuURL := extracter.ExtractMenuURL(netURL)
 	fullPage, err := engine.downloader.Download(menuURL, MAX_RETRIES_COUNT)
 
+	// 出错说明源有问题，那么就移除掉
 	if err != nil {
+		GlobalSiteSearcher.RemoveItem(addr.Host)
 		return
 	}
+
+	path := extracter.ExtractIconURL(fullPage)
+	pathURL, err := url.Parse(path)
+	CheckError(err)
+
+	hostURL, err := url.Parse(netURL)
+	CheckError(err)
+	iconURL = hostURL.ResolveReference(pathURL).String()
 
 	// 设置互联网上菜单所在的url
 	novel.MenuURL = menuURL
 	// 从fullPage中提取Name, Author, LastUpdateTime
 	engine.constructNovelBase(fullPage, novel, extracter)
+	end := time.Now().Unix()
+
+	if end-start > engine.threshold {
+		GlobalSiteSearcher.RemoveItem(addr.Host)
+	}
 	return
 }
 
@@ -170,6 +200,7 @@ func (engine *Engine) constructNovelBase(fullPage string, novel *Novel, extracte
 	novel.Author = extracter.ExtractNovelAuthor(fullPage)
 	novel.LastUpdateTime = extracter.ExtractLastUpdateTime(fullPage)
 	novel.NewestLastChapterName = extracter.ExtractNewestLastChapterName(fullPage)
+	novel.Description = extracter.ExtractNovelDescription(fullPage)
 
 	log.Debug("Name", novel.Name)
 	log.Debug("Author:", novel.Author)
@@ -341,4 +372,12 @@ func (engine *Engine) downloadIcon(menuPage string, extracter Extracter, novel *
 		CheckError(err)
 		ioutil.WriteFile("./json/"+filename, []byte(img), 0666)
 	}()
+}
+
+func (engine *Engine) GetLogger() *logging.Logger {
+	return log
+}
+
+func (engine *Engine) GetDownloader() Downloader {
+	return engine.downloader
 }

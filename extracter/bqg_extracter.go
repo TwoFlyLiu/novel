@@ -22,8 +22,8 @@ const (
 	NOVEL_AUTHOR_PATTERN_SUBMATCH                = `\<div\s+id="info"[\s\S]+?\<p\>([\s\S]+?)\</p\>`
 	NOVEL_ICON_URL_PATTERN_SUBMATCH              = `\<div\s+id="fmimg"[\s\S]+?\<img.*?src="(.*?)"`
 	NOVEL_LASTUPDATETIME_PATTERN_SUBMATCH        = `\<div\s+id="info"[\s\S]+?\<p\>[\s\S]+?\<p\>[\s\S]+?\<p\>([\s\S]+?)\</p\>`
-	NOVEL_NEWESTLASTCHAPTERNAME_PATTERN_SUBMATCH = `<div\s+id="info"[\s\S]+?\<p\>[\s\S]+?\<p\>[\s\S]+?\<p\>[\s\S]+?\<p\>[\s\S]+?\<a[\s\S]+?\>([\s\S]+?)\</a\>`
-	NOVEL_DESCRIPTION_PATTERN_SUBMATCH           = `\<div\s+id="intro"[\s\S]+?\<p\>([\s\S]+?)\</p\>`
+	NOVEL_NEWESTLASTCHAPTERNAME_PATTERN_SUBMATCH = `\<div\s+id="info"[\s\S]+?\<p\>[\s\S]+?\<p\>[\s\S]+?\<p\>[\s\S]+?\<p\>[\s\S]+?\<a[\s\S]+?\>([\s\S]+?)\</a\>`
+	NOVEL_DESCRIPTION_PATTERN_SUBMATCH           = `\<div\s+id="intro"\>([\s\S]+?)\</div\>`
 	MENULIST_PATTERN_FIND                        = `\<div\s+id="list"[\s\S]+?\</div\>`
 	MENUITEM_PATTERN_SUBMATCH                    = `\<a[\s\S]+?href="([\s\S]+?)"\s*\>([\s\S]+?)\</a\>`
 	CHAPTERTITLE_PATTERN_SUBMATCH                = `\<div\s+class="bookname"[\s\S]+?\<h1\>([\s\S]+?)\</h1\>`
@@ -35,7 +35,7 @@ const (
 	CHINESE_SEC_STR                              = "："      //中文分号字符
 	CHINESE_SEC_LEN                              = len("：") //中文分号长度
 
-	SEARCH_OBJ_URL_PATTERN_STR = `\<a\s*cpos="title"\s*href="([\s\S]+?)"\s*title="%s"`
+	SEARCH_OBJ_URL_PATTERN_STR = `\<a\s+cpos="title"\s*href="(.+?)"\s*title="%s"`
 
 	BQG_SEARCH_FORM_FIND                   = `\<form\s+id="bdcs-search-form"[\s\S]+?\</form\>`
 	BQG_SEARCH_FORM_ACTION_METHOD_SUBMATCH = `\<form\s+id="bdcs-search-form"\s+action="([\s\S]+?)"\s+method="([\s\S]+?)"`
@@ -220,9 +220,24 @@ func (extracter *BiqugeExtracter) ExtractIconURL(menuPage string) (iconUrl strin
 
 func (extracter *BiqugeExtracter) ExtractNovelDescription(menuPage string) (description string) {
 	submatch := novelDescriptionPatternSubMatch.FindStringSubmatch(menuPage)
-	if len(submatch) > 1 {
-		description = submatch[1]
+	if len(submatch) <= 1 {
+		return
 	}
+
+	description = submatch[1]
+
+	description = strings.Replace(description, "<br>", "\n", -1)
+	description = strings.Replace(description, "<br />", "\n", -1)
+	description = strings.Replace(description, "&nbsp;", " ", -1)
+	description = strings.TrimSpace(description)
+
+	if left := strings.Index(description, "<p>"); left != -1 {
+		if right := strings.Index(description, "</p>"); right != -1 {
+			description = description[left+3 : right]
+			description = strings.TrimSpace(description)
+		}
+	}
+
 	return
 }
 
@@ -264,15 +279,15 @@ func init() {
 	bqgSearchFormNameFieldSubmatch = regexp.MustCompile(BQG_SEARCH_FORM_NAME_FIELD_SUBMATCH)
 
 	pattern := "^(www.qu.la)|(www.xs.la)|(www.37zw.net)|(www.biquge.cc)|(www.37zw.com)|(www.xxbiquge.com)$"
-	engine.GlobalSiteSearcher.AddItem("http://zhannei.baidu.com/cse/search?s=1393206249994657467&q=%s",
-		false, false, "www.xs.la")
-	engine.GlobalSiteSearcher.AddItem("http://zhannei.baidu.com/cse/search?s=8823758711381329060&ie=utf-8&q=%s",
-		false, false, "www.xxbiquge.com")
-	//engine.GlobalSiteSearcher.AddItem("http://zhannei.baidu.com/cse/search?s=14041278195252845489&entry=1&q=%s",
-	//false, false, "www.biquge.cc")
 	engine.GlobalSiteSearcher.AddItem("http://zhannei.baidu.com/cse/search?s=920895234054625192&entry=1&q=%s",
 		false, false, "www.qu.la") //最后一个参数需要是你对应注册好的支持的host
+	engine.GlobalSiteSearcher.AddItem("http://zhannei.baidu.com/cse/search?s=8823758711381329060&ie=utf-8&q=%s",
+		false, false, "www.xxbiquge.com")
+	engine.GlobalSiteSearcher.AddItem("http://zhannei.baidu.com/cse/search?s=1393206249994657467&q=%s",
+		false, false, "www.xs.la")
+	engine.GlobalSiteSearcher.AddItem("http://zhannei.baidu.com/cse/search?s=14041278195252845489&entry=1&q=%s",
+		false, false, "www.biquge.cc")
 	engine.GlobalSiteSearcher.AddItem("http://zhannei.baidu.com/cse/search?s=2041213923836881982&q=%s&isNeedCheckDomain=1&jump=1",
-		true, true, "www.37zw.net") //www.37zw.net数的质量比较好,速度比较快，但是容易出现乱码问题
+		true, true, "www.37zw.com") //www.37zw.net数的质量比较好,速度比较快，但是容易出现乱码问题
 	engine.RegisterExtracter(pattern, NewExtracter())
 }

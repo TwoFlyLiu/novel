@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/twoflyliu/novel3/tool"
+	"github.com/twoflyliu/novel2/tool"
 )
 
 // Downloader提供从互联网上下载制定url页面的的能力
@@ -24,12 +24,15 @@ func (downloader *HttpDownloader) Download(url string, maxRetries int) (fullPage
 	for maxRetries > 0 {
 		maxRetries--
 		response, err = http.Get(url)
+		// log.Debugf("URL: %s, StatusLine: %s, Error: %v\n", url, response.Status, err)
+
 		if err != nil {
 			return
 		}
 		if response.Status == "200 OK" {
 			break
 		} else {
+			err = fmt.Errorf("Status Line: %s", response.Status)
 			response.Body.Close() //在循环体内部调用defer是不会自动执行的
 		}
 	}
