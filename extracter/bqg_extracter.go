@@ -23,6 +23,7 @@ const (
 	NOVEL_ICON_URL_PATTERN_SUBMATCH              = `\<div\s+id="fmimg"[\s\S]+?\<img.*?src="(.*?)"`
 	NOVEL_LASTUPDATETIME_PATTERN_SUBMATCH        = `\<div\s+id="info"[\s\S]+?\<p\>[\s\S]+?\<p\>[\s\S]+?\<p\>([\s\S]+?)\</p\>`
 	NOVEL_NEWESTLASTCHAPTERNAME_PATTERN_SUBMATCH = `<div\s+id="info"[\s\S]+?\<p\>[\s\S]+?\<p\>[\s\S]+?\<p\>[\s\S]+?\<p\>[\s\S]+?\<a[\s\S]+?\>([\s\S]+?)\</a\>`
+	NOVEL_DESCRIPTION_PATTERN_SUBMATCH           = `\<div\s+id="intro"[\s\S]+?\<p\>([\s\S]+?)\</p\>`
 	MENULIST_PATTERN_FIND                        = `\<div\s+id="list"[\s\S]+?\</div\>`
 	MENUITEM_PATTERN_SUBMATCH                    = `\<a[\s\S]+?href="([\s\S]+?)"\s*\>([\s\S]+?)\</a\>`
 	CHAPTERTITLE_PATTERN_SUBMATCH                = `\<div\s+class="bookname"[\s\S]+?\<h1\>([\s\S]+?)\</h1\>`
@@ -46,6 +47,7 @@ var (
 	novelNamePatternSubMatch                  *regexp.Regexp
 	novelAuthorPatternSubMatch                *regexp.Regexp
 	novelLastUpdateTimePatternSubMatch        *regexp.Regexp
+	novelDescriptionPatternSubMatch           *regexp.Regexp
 	novelIconUrlPatternSubMatch               *regexp.Regexp
 	novelNewestLastChapterNamePatternSubMatch *regexp.Regexp
 	menuListPatternFind                       *regexp.Regexp
@@ -216,6 +218,14 @@ func (extracter *BiqugeExtracter) ExtractIconURL(menuPage string) (iconUrl strin
 	return
 }
 
+func (extracter *BiqugeExtracter) ExtractNovelDescription(menuPage string) (description string) {
+	submatch := novelDescriptionPatternSubMatch.FindStringSubmatch(menuPage)
+	if len(submatch) > 1 {
+		description = submatch[1]
+	}
+	return
+}
+
 // 使用一种自注册技术
 func init() {
 	var err error
@@ -224,6 +234,8 @@ func init() {
 	novelAuthorPatternSubMatch, err = regexp.Compile(NOVEL_AUTHOR_PATTERN_SUBMATCH)
 	engine.CheckError(err)
 	novelLastUpdateTimePatternSubMatch, err = regexp.Compile(NOVEL_LASTUPDATETIME_PATTERN_SUBMATCH)
+	engine.CheckError(err)
+	novelDescriptionPatternSubMatch, err = regexp.Compile(NOVEL_DESCRIPTION_PATTERN_SUBMATCH)
 	engine.CheckError(err)
 	novelNewestLastChapterNamePatternSubMatch, err = regexp.Compile(NOVEL_NEWESTLASTCHAPTERNAME_PATTERN_SUBMATCH)
 	engine.CheckError(err)
