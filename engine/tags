@@ -1,0 +1,79 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+AddChapter	entity.go	/^func (novel *Novel) AddChapter(chapter *Chapter) {$/;"	f
+AddItem	searcher.go	/^func (ss *SiteSearcher) AddItem(fmtSearchString string, escape bool, gbk bool, host string) {$/;"	f
+AddMenu	entity.go	/^func (novel *Novel) AddMenu(menu *Menu) {$/;"	f
+AutoSelectExtracter	extracter.go	/^func AutoSelectExtracter(URL string) Extracter {$/;"	f
+BaseInfoByURL	engine.go	/^func (engine *Engine) BaseInfoByURL(url string) (novel *Novel, err error) {$/;"	f
+CHARSET_PATTERN_SUBMATCH	extracter.go	/^	CHARSET_PATTERN_SUBMATCH = `\\<meta\\s+http-equiv="Content-Type"\\s+content="text\/html;\\s*charset\\s*=\\s*([\\s\\S]+?)"\\s*\/\\>`$/;"	c
+Chapter	entity.go	/^type Chapter struct {$/;"	t
+CheckError	error.go	/^func CheckError(err error) {$/;"	f
+Download	downloader.go	/^func (downloader *HttpDownloader) Download(url string, maxRetries int) (fullPage string, err error) {$/;"	f
+Downloader	downloader.go	/^type Downloader interface {$/;"	t
+DownloaderTestData	downloader_test.go	/^type DownloaderTestData struct {$/;"	t
+Engine	engine.go	/^type Engine struct {$/;"	t
+Error	error.go	/^func (err *NovelNotExistError) Error() string {$/;"	f
+ExtractCharset	extracter.go	/^func ExtractCharset(fullPage string) (charset string) {$/;"	f
+Extracter	extracter.go	/^type Extracter interface {$/;"	t
+GlobalSiteSearcher	searcher.go	/^var GlobalSiteSearcher *SiteSearcher$/;"	v
+HttpDownloader	downloader.go	/^type HttpDownloader struct{}$/;"	t
+JsonNovelDao	dao.go	/^type JsonNovelDao struct {$/;"	t
+Load	dao.go	/^func (dao *JsonNovelDao) Load(novel *Novel) error {$/;"	f
+MAX_RETRIES_COUNT	engine.go	/^	MAX_RETRIES_COUNT = 5 \/\/当下载失败最后重复的次数$/;"	c
+Menu	entity.go	/^type Menu struct {$/;"	t
+MustSelectSuitableExtracter	engine.go	/^func MustSelectSuitableExtracter(url string) (extracter Extracter) {$/;"	f
+NativeSearcher	searcher.go	/^type NativeSearcher struct{}$/;"	t
+NewChapter	entity.go	/^func NewChapter(title, content string) *Chapter {$/;"	f
+NewDefaultDownloader	downloader.go	/^func NewDefaultDownloader() Downloader {$/;"	f
+NewDefaultEngine	engine.go	/^func NewDefaultEngine() *Engine {$/;"	f
+NewEngine	engine.go	/^func NewEngine(downloader Downloader, dao NovelDao, verbose bool) *Engine {$/;"	f
+NewJsonNovelDao	dao.go	/^func NewJsonNovelDao(args ...string) NovelDao {$/;"	f
+NewMenu	entity.go	/^func NewMenu(name, url string) *Menu {$/;"	f
+NewNovelNotExistError	error.go	/^func NewNovelNotExistError(novelName string) *NovelNotExistError {$/;"	f
+Novel	entity.go	/^type Novel struct {$/;"	t
+NovelByName	engine.go	/^func (engine *Engine) NovelByName(name string) (novel *Novel, err error) {$/;"	f
+NovelByURL	engine.go	/^func (engine *Engine) NovelByURL(url string) (novel *Novel, err error) {$/;"	f
+NovelDao	dao.go	/^type NovelDao interface {$/;"	t
+NovelNotExistError	error.go	/^type NovelNotExistError struct {$/;"	t
+RegisterExtracter	extracter.go	/^func RegisterExtracter(regexpStr string, extracter Extracter) {$/;"	f
+Save	dao.go	/^func (dao *JsonNovelDao) Save(novel *Novel) {$/;"	f
+Save	engine.go	/^func (engine *Engine) Save(novel *Novel) {$/;"	f
+Search	searcher.go	/^func (ss *NativeSearcher) Search(name string) (result []string) {$/;"	f
+Search	searcher.go	/^func (ss *SiteSearcher) Search(name string) []string {$/;"	f
+SearchSite	engine.go	/^func (engine *Engine) SearchSite(name string) []string {$/;"	f
+Searcher	searcher.go	/^type Searcher interface {$/;"	t
+SearcherItem	searcher.go	/^type SearcherItem struct {$/;"	t
+SiteSearcher	searcher.go	/^type SiteSearcher struct {$/;"	t
+SyncNovel	engine.go	/^func (engine *Engine) SyncNovel(novel *Novel) {$/;"	f
+THREAD_COUNT	engine.go	/^	THREAD_COUNT      = 15$/;"	c
+TestDefaultDownloader	downloader_test.go	/^func TestDefaultDownloader(t *testing.T) {$/;"	f
+TestExtractCharset	extracter_test.go	/^func TestExtractCharset(t *testing.T) {$/;"	f
+charsetPatternSubMatch	extracter.go	/^	charsetPatternSubMatch *regexp.Regexp$/;"	v
+configLog	logging.go	/^func configLog(enable bool) {$/;"	f
+constructNovelBase	engine.go	/^func (engine *Engine) constructNovelBase(fullPage string, novel *Novel, extracter Extracter) {$/;"	f
+constructNovelChapters	engine.go	/^func (engine *Engine) constructNovelChapters(novel *Novel, extracter Extracter) {$/;"	f
+constructNovelChaptersT	engine.go	/^func (engine *Engine) constructNovelChaptersT(chapters []*Chapter, menus []*Menu, msgChan chan string,$/;"	f
+constructNovelMenus	engine.go	/^func (engine *Engine) constructNovelMenus(fullPage string, novel *Novel, extracter Extracter) {$/;"	f
+doUpdate	engine.go	/^func (engine *Engine) doUpdate(novel *Novel, menuPage string, menuPageURL string, extracter Extracter) {$/;"	f
+downloadIcon	engine.go	/^func (engine *Engine) downloadIcon(menuPage string, extracter Extracter, novel *Novel) {$/;"	f
+engine	dao.go	/^package engine$/;"	p
+engine	downloader.go	/^package engine$/;"	p
+engine	downloader_test.go	/^package engine$/;"	p
+engine	engine.go	/^package engine$/;"	p
+engine	entity.go	/^package engine$/;"	p
+engine	error.go	/^package engine$/;"	p
+engine	extracter.go	/^package engine$/;"	p
+engine	extracter_test.go	/^package engine$/;"	p
+engine	logging.go	/^package engine$/;"	p
+engine	searcher.go	/^package engine$/;"	p
+format	logging.go	/^var format = logging.MustStringFormatter(`%{color:bold}%{time:2006-01-02 15:04:05.999Z-07:00} %{shortfunc}▶ [%{level:.4s}] %{id:03x}%{color:reset} %{message}`)$/;"	v
+globalExtracterManager	extracter.go	/^var globalExtracterManager map[string]Extracter$/;"	v
+init	extracter.go	/^func init() {$/;"	f
+init	searcher.go	/^func init() {$/;"	f
+joinMenuURLAndChapater	engine.go	/^func (engine *Engine) joinMenuURLAndChapater(menuURL, page string) string {$/;"	f
+log	logging.go	/^var log = logging.MustGetLogger("logging")$/;"	v
+mkSearchURL	searcher.go	/^func (ss *SiteSearcher) mkSearchURL(item *SearcherItem, name string) string {$/;"	f
