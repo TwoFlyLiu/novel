@@ -10,3 +10,4 @@ NovelEngine.xmind
 *.glade~
 search/search
 novel/novel
+novel/.*
