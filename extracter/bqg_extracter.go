@@ -228,6 +228,7 @@ func (extracter *BiqugeExtracter) ExtractNovelDescription(menuPage string) (desc
 
 	description = strings.Replace(description, "<br>", "\n", -1)
 	description = strings.Replace(description, "<br />", "\n", -1)
+	description = strings.Replace(description, "<br/>", "\n", -1)
 	description = strings.Replace(description, "&nbsp;", " ", -1)
 	description = strings.TrimSpace(description)
 

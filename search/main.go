@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -12,37 +11,40 @@ import (
 )
 
 type SearchResult struct {
-	novel   *engine.Novel
-	time    int64
-	iconURL string
+	novel *engine.Novel
+	time  int64
 }
 
 func main() {
 	var verbose bool
+	var iconDirName, iconExt string
 	flag.BoolVar(&verbose, "verbose", false, "enable debug information")
+	flag.StringVar(&iconDirName, "id", "./icons", "icon directory name")
+	flag.StringVar(&iconExt, "ie", ".img", "icon extension name")
 	flag.Parse()
 
 	if flag.NArg() == 0 {
 		fmt.Fprintf(os.Stderr, "Usage: %s [-verbose] 小说名称", os.Args[0])
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	mgr := engine.NewDefaultEngine(verbose)
+	mgr := engine.NewDefaultEngine(verbose, "", "", iconDirName, iconExt)
 	urls := mgr.SearchSite(flag.Arg(0))
 	log := mgr.GetLogger()
 
 	var results []SearchResult
 
 	for _, url := range urls {
-		start := time.Now().Unix()
-		novel, iconURL, err := mgr.BaseInfoByURL(url)
-		end := time.Now().Unix()
+		start := time.Now().UnixNano()
+		novel, err := mgr.BaseInfoByURL(url)
+		end := time.Now().UnixNano()
 
 		if err != nil {
 			log.Info("URL:", url, "error:", err)
 			continue
 		}
-		results = append(results, SearchResult{novel, end - start, iconURL})
+		results = append(results, SearchResult{novel, end - start})
 
 		log.Info("MenuURL:", novel.MenuURL)
 		log.Info("Name:", novel.Name)
@@ -59,6 +61,7 @@ func main() {
 		return
 	}
 
+	// 找到下载速度最快的源，并且将接口通过命令行来返回
 	minPos := 0
 	for i := 1; i < len(results); i++ {
 		if results[minPos].time > results[minPos].time {
@@ -66,15 +69,14 @@ func main() {
 		}
 	}
 
-	file, err := ioutil.TempFile("/tmp", "novel")
-	engine.CheckError(err)
-	defer file.Close()
+	// 下载小说对应的图标, 先写出图标
+	mgr.DownloadAndSaveIcon(results[minPos].novel)
 
+	// 然后输出搜索结果
+	if len(iconExt) > 0 && iconExt[0] != '.' {
+		iconExt = "." + iconExt
+	}
 	fmt.Printf("%s|%s|%s|%s|%s|%s\n", results[minPos].novel.MenuURL, results[minPos].novel.Name,
 		results[minPos].novel.Author, results[minPos].novel.Description, results[minPos].novel.NewestLastChapterName,
-		file.Name())
-
-	iconContent, err := mgr.GetDownloader().Download(results[minPos].iconURL, 5)
-	engine.CheckError(err)
-	file.Write([]byte(iconContent))
+		iconDirName+"/"+results[minPos].novel.Name+iconExt)
 }
