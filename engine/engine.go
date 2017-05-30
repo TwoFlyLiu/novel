@@ -5,7 +5,6 @@ package engine
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"strings"
 	"time"
@@ -23,29 +22,49 @@ const (
 //This class is not guaranteed to be thread-safe. It depends largely on the implementation of Download and NovelDao.
 //Default Engine object is thread-safe, which is producted by NewDefaultEngine factory function.
 type Engine struct {
-	downloader Downloader //An object that implements Downloader interface. It is a aggregated object and mainly provide download function from  internet
-	dao        NovelDao   //An object that implements NovelDao interface. It is a aggreated object and mainy provide serialize novel function
-	threshold  int64      //The max time of extract baseinfo. If actually extracting time more thant threshold, search item will be removed
+	downloader   Downloader //An object that implements Downloader interface. It is a aggregated object and mainly provide download function from  internet
+	dao          Dao        //An object that implements NovelDao interface. It is a aggreated object and mainy provide serialize novel function
+	threshold    int64      //The max time of extract baseinfo. If actually extracting time more thant threshold, search item will be removed
+	novelDirName string     //Native novel dir
+	novelSuffix  string     //Novel suffix
+	maxRetries   int        //当下载失败，最大尝试次数
+	iconDirName  string     //图标所在本地目录
+	iconSuffix   string     //图标的后缀
 }
 
 //NewEngine is a factory function used to create Engine object
 //downloader - an implementation of Downloader
 //dao - an implementation of NovelDao
 //verbose - enable debug information
-//threshold - threshold time
-func NewEngine(downloader Downloader, dao NovelDao, verbose bool, threshold int64) *Engine {
+//threshold - threshold time, in second
+//novelDirName - 小说保存的目录名
+//novelSuffix - 小说的扩展名
+//iconDirName - 图标保存的本地目录名
+//iconSuffix - 保存的图标的扩展名
+func NewEngine(downloader Downloader, dao Dao, verbose bool,
+	threshold int64, novelDirName string, novelSuffix string,
+	iconDirName string, iconSuffix string, maxRetries int) *Engine {
 	configLog(verbose) //配置日志
 	GlobalSiteSearcher.loadIgnoredHosts()
-	return &Engine{downloader: downloader, dao: dao, threshold: threshold}
+
+	// 去除拓展名中开始的.
+	if len(novelSuffix) > 1 && novelSuffix[0] == '.' {
+		novelSuffix = novelSuffix[1:]
+	}
+	return &Engine{downloader: downloader, dao: dao, threshold: threshold,
+		novelDirName: novelDirName, novelSuffix: novelSuffix, maxRetries: maxRetries,
+		iconDirName: iconDirName, iconSuffix: iconSuffix}
 }
 
 //NewDefaultEngine is a handy factory function.It produces a thread-safe object, which uses the HttpDownloader object and
 // the JsonDao object.
 //
 //verbose - enable debug information
-func NewDefaultEngine(verbose bool) *Engine {
+func NewDefaultEngine(verbose bool, novelDirName string, novelSuffix string,
+	iconDirName string, iconSuffix string) *Engine {
 	return NewEngine(NewDefaultDownloader(),
-		NewJsonNovelDao(), verbose, 1)
+		NewJsonNovelDao(), verbose, 3, novelDirName, novelSuffix,
+		iconDirName, iconSuffix, 3)
 }
 
 //Set threshold time of extract base info from url in second
@@ -59,7 +78,7 @@ func (engine *Engine) SetThreshold(threshold int64) {
 //return novel finally novel. err is to achieve error information if an error has occurred.
 func (engine *Engine) NovelByName(name string) (novel *Novel, err error) {
 	log.Debugf("Got novel by name %q", name)
-	novel, err = engine.dao.Load(name) //先从本地获取
+	novel, err = engine.dao.LoadNovel(engine.novelDirName + SEP + name + "." + engine.novelSuffix) //先从本地获取
 
 	// 当不存在，再从远程获取
 	if err != nil {
@@ -69,8 +88,7 @@ func (engine *Engine) NovelByName(name string) (novel *Novel, err error) {
 			log.Debugf("Current use url %q", u)
 			novel, err = engine.NovelByURL(u) //然后从可选的互联网上获取一个，当此互联网不可用或者出现问题的时候，则使用另一个网站
 			if err == nil {
-				log.Debug("Save novel to native")
-				engine.dao.Save(novel)
+				log.Debugf("Download novel %s done!")
 				break //表明下载成功
 			}
 		}
@@ -90,7 +108,7 @@ func (engine *Engine) NovelByURL(url string) (novel *Novel, err error) {
 	novel = new(Novel)
 
 	menuURL := extracter.ExtractMenuURL(url)
-	fullPage, err := engine.downloader.Download(menuURL, MAX_RETRIES_COUNT)
+	fullPage, err := engine.downloader.Download(menuURL, engine.maxRetries)
 
 	if err != nil {
 		return
@@ -106,14 +124,8 @@ func (engine *Engine) NovelByURL(url string) (novel *Novel, err error) {
 	// 从fullPage从提取出所有的菜单
 	engine.constructNovelMenus(fullPage, novel, extracter)
 
-	// 下载图标到本地
-	engine.downloadIcon(fullPage, extracter, novel)
-
 	// 下来所有的章节到novel.Chapaters中
 	engine.constructNovelChapters(novel, extracter)
-
-	// 保存内容到本地
-	engine.dao.Save(novel)
 	return
 }
 
@@ -122,7 +134,7 @@ func (engine *Engine) NovelByURL(url string) (novel *Novel, err error) {
 // url - the url of novel menu page, which is achieved by call SearchSite method
 // novel - finally base information and the field of Chapters is invalid in novel.
 // err - may contain error message
-func (engine *Engine) BaseInfoByURL(netURL string) (novel *Novel, iconURL string, err error) {
+func (engine *Engine) BaseInfoByURL(netURL string) (novel *Novel, err error) {
 	addr, err := url.Parse(netURL)
 	CheckError(err)
 
@@ -136,21 +148,13 @@ func (engine *Engine) BaseInfoByURL(netURL string) (novel *Novel, iconURL string
 	novel = new(Novel)
 
 	menuURL := extracter.ExtractMenuURL(netURL)
-	fullPage, err := engine.downloader.Download(menuURL, MAX_RETRIES_COUNT)
+	fullPage, err := engine.downloader.Download(menuURL, engine.maxRetries)
 
 	// 出错说明源有问题，那么就移除掉
 	if err != nil {
 		GlobalSiteSearcher.RemoveItem(addr.Host)
 		return
 	}
-
-	path := extracter.ExtractIconURL(fullPage)
-	pathURL, err := url.Parse(path)
-	CheckError(err)
-
-	hostURL, err := url.Parse(netURL)
-	CheckError(err)
-	iconURL = hostURL.ResolveReference(pathURL).String()
 
 	// 设置互联网上菜单所在的url
 	novel.MenuURL = menuURL
@@ -178,7 +182,7 @@ func (engine *Engine) SyncNovel(novel *Novel) {
 
 	extracter := MustSelectSuitableExtracter(lastMenuItem.URL)
 	menuPageURL := extracter.ExtractMenuURL(lastMenuItem.URL)
-	menuPage, err := engine.downloader.Download(menuPageURL, MAX_RETRIES_COUNT)
+	menuPage, err := engine.downloader.Download(menuPageURL, engine.maxRetries)
 
 	if err != nil {
 		panic(fmt.Sprintf("Downlad page [%s] fail: %v", menuPageURL, err))
@@ -186,13 +190,13 @@ func (engine *Engine) SyncNovel(novel *Novel) {
 	newestLastMenuName := extracter.ExtractNewestLastChapterName(menuPage)
 	if strings.TrimSpace(lastMenuItem.Name) != strings.TrimSpace(newestLastMenuName) {
 		engine.doUpdate(novel, menuPage, menuPageURL, extracter) //讲新的内容更新到内存和本地
-		engine.Save(novel)                                       //保存到本地
+		engine.SaveNovel(novel)                                  //将内容保存会本地
 	}
 }
 
 // Save - save novel to native, which mainly depends on the implementation of engine.dao
-func (engine *Engine) Save(novel *Novel) {
-	engine.dao.Save(novel)
+func (engine *Engine) SaveNovel(novel *Novel) error {
+	return engine.dao.SaveNovel(novel, engine.novelDirName, engine.novelSuffix)
 }
 
 func (engine *Engine) constructNovelBase(fullPage string, novel *Novel, extracter Extracter) {
@@ -201,6 +205,7 @@ func (engine *Engine) constructNovelBase(fullPage string, novel *Novel, extracte
 	novel.LastUpdateTime = extracter.ExtractLastUpdateTime(fullPage)
 	novel.NewestLastChapterName = extracter.ExtractNewestLastChapterName(fullPage)
 	novel.Description = extracter.ExtractNovelDescription(fullPage)
+	novel.IconURL = extracter.ExtractIconURL(fullPage)
 
 	log.Debug("Name", novel.Name)
 	log.Debug("Author:", novel.Author)
@@ -313,7 +318,7 @@ func (engine *Engine) constructNovelChaptersT(chapters []*Chapter, menus []*Menu
 	tid int, extracter Extracter, name string) {
 	jobCount := len(menus)
 	for i := 0; i < jobCount; i++ {
-		fullPage, err := engine.downloader.Download(menus[i].URL, MAX_RETRIES_COUNT)
+		fullPage, err := engine.downloader.Download(menus[i].URL, engine.maxRetries)
 		if err != nil {
 			msgChan <- fmt.Sprintf("[%d] Dowloader.downloader(%s) fail[%s]: %v\n", tid, name, menus[i].URL, err)
 			continue
@@ -355,23 +360,31 @@ func (engine *Engine) SearchSite(name string) []string {
 	return GlobalSiteSearcher.Search(name)
 }
 
-func (engine *Engine) downloadIcon(menuPage string, extracter Extracter, novel *Novel) {
+func (engine *Engine) DownloadIcon(novel *Novel) (img []byte, err error) {
 	host, err := url.Parse(novel.MenuURL)
 	CheckError(err)
 
-	iconURL := extracter.ExtractIconURL(menuPage)
+	iconURL := novel.IconURL
 	path, err := url.Parse(iconURL)
 	CheckError(err)
 
-	// 后缀名是无所谓的
-	filename := novel.Name + ".img"
-
 	fullpath := host.ResolveReference(path)
-	go func() {
-		img, err := engine.downloader.Download(fullpath.String(), 5)
-		CheckError(err)
-		ioutil.WriteFile("./json/"+filename, []byte(img), 0666)
-	}()
+	imgStr, err := engine.downloader.Download(fullpath.String(), engine.maxRetries)
+	img = []byte(imgStr)
+	return
+}
+
+func (engine *Engine) SaveIcon(iconName string, img []byte) error {
+	return engine.dao.SaveIcon(img, engine.iconDirName, iconName, engine.iconSuffix)
+}
+
+func (engine *Engine) DownloadAndSaveIcon(novel *Novel) error {
+	img, err := engine.DownloadIcon(novel)
+	if err != nil {
+		return err
+	}
+	err = engine.SaveIcon(novel.Name, img)
+	return err
 }
 
 func (engine *Engine) GetLogger() *logging.Logger {

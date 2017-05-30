@@ -6,6 +6,7 @@ type Novel struct {
 	LastUpdateTime        string     //小说最后更新时间
 	Author                string     //小说作者
 	MenuURL               string     //互联网上菜单页面所在的URL
+	IconURL               string     //小说图标URL
 	NewestLastChapterName string     //最新的最后章节的名称
 	Description           string     //小说描述信息
 	Menus                 []*Menu    //小说的目录

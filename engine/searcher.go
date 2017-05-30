@@ -8,7 +8,7 @@ import "bufio"
 import "github.com/twoflyliu/novel3/tool"
 
 const (
-	IGNORED_HOST_FILE = "./config/.ignore_host_file"
+	IGNORED_HOST_FILE = ".ignore_host_file"
 )
 
 type Searcher interface {
@@ -56,6 +56,10 @@ func (ss *SiteSearcher) RemoveItem(host string) {
 	}
 }
 
+func (ss *SiteSearcher) RemoveAllIgnoredHost() {
+	ss.ignoredHost = []string{}
+}
+
 func (ss *SiteSearcher) containsIgnoredHost(host string) bool {
 	for i := 0; i < len(ss.ignoredHost); i++ {
 		if host == ss.ignoredHost[i] {
@@ -76,7 +80,10 @@ func (ss *SiteSearcher) appendIgnoreHostToNative(host string) {
 func (ss *SiteSearcher) loadIgnoredHosts() {
 	log.Debug("Load Ignored hosts from native file")
 	file, err := os.Open(IGNORED_HOST_FILE)
-	CheckError(err)
+	if err != nil {
+		log.Debugf("%q not exist", IGNORED_HOST_FILE)
+		return
+	}
 	defer file.Close()
 
 	buff := bufio.NewReader(file)
