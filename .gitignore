@@ -9,5 +9,14 @@ __pycache__
 NovelEngine.xmind
 *.glade~
 search/search
-novel/novel
+search/.*
+novel/novels
+novel/icons
+novel/*.xcf
 novel/.*
+backend/backend
+backend/novels
+backend/json
+backend/jsons
+backend/icons
+backend/.*
