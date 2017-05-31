@@ -15,6 +15,7 @@ func main() {
 	var iconExt string
 	var iconDir string
 	var novelExt string
+	var logDir string
 
 	flag.BoolVar(&download, "g", false, "do download operator")
 	flag.BoolVar(&downloadIcon, "gi", false, "if download icon")
@@ -25,6 +26,7 @@ func main() {
 	flag.BoolVar(&verbose, "verbose", false, "enable debug information")
 	flag.StringVar(&iconExt, "ie", "img", "icon ext name")
 	flag.StringVar(&iconDir, "id", "icons", "icon native directory")
+	flag.StringVar(&logDir, "ld", ".", "log dir name")
 	flag.Parse()
 
 	// 默认是下载操作
@@ -38,8 +40,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	mgr := engine.NewDefaultEngine(verbose, downloadDir, "", iconDir, iconExt)
-	mgr.GetLogger().Debug("download dir:", downloadDir)
+	if len(logDir) > 1 && logDir[len(logDir)-1] == '/' {
+		logDir = logDir[0 : len(logDir)-1]
+	}
+	mgr := engine.NewDefaultEngine(verbose, downloadDir, novelExt, iconDir, iconExt, logDir)
 	switch {
 	case update:
 		doUpdate(mgr, flag.Arg(0))
@@ -49,13 +53,13 @@ func main() {
 }
 
 func doUpdate(mgr *engine.Engine, novelName string) {
-	//logger := mgr.GetLogger()
+	logger := mgr.GetLogger()
+	logger.Debugf("Update novel %q", novelName)
 
 	// 下面是从本地加载文件，但是如果本地没有对应的novel，他会自动下载的
 	novel, err := mgr.NovelByName(novelName)
-	if err != nil {
-		mgr.SyncNovel(novel) //手动更新
-	}
+	CheckError(err)
+	mgr.SyncNovel(novel) //手动更新
 }
 
 func doDownload(mgr *engine.Engine, url string, dirname string, iconExt string,
