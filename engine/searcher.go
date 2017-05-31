@@ -7,10 +7,6 @@ import "bufio"
 
 import "github.com/twoflyliu/novel3/tool"
 
-const (
-	IGNORED_HOST_FILE = ".ignore_host_file"
-)
-
 type Searcher interface {
 	Search(name string) []string
 }
@@ -70,7 +66,8 @@ func (ss *SiteSearcher) containsIgnoredHost(host string) bool {
 }
 
 func (ss *SiteSearcher) appendIgnoreHostToNative(host string) {
-	file, err := os.OpenFile(IGNORED_HOST_FILE, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	ignoredHostFilePath := config.BaseDirName() + "/" + config.IgnoredHostFileName()
+	file, err := os.OpenFile(ignoredHostFilePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	CheckError(err)
 	defer file.Close()
 	file.Write([]byte(host))
@@ -79,9 +76,10 @@ func (ss *SiteSearcher) appendIgnoreHostToNative(host string) {
 
 func (ss *SiteSearcher) loadIgnoredHosts() {
 	log.Debug("Load Ignored hosts from native file")
-	file, err := os.Open(IGNORED_HOST_FILE)
+	ignoredHostFilePath := config.BaseDirName() + "/" + config.IgnoredHostFileName()
+	file, err := os.Open(ignoredHostFilePath)
 	if err != nil {
-		log.Debugf("%q not exist", IGNORED_HOST_FILE)
+		log.Debugf("%q not exist", ignoredHostFilePath)
 		return
 	}
 	defer file.Close()

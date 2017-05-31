@@ -1,7 +1,8 @@
+@import url("./reset.css");
+@import url("./view.css");
+
 * { 
     font: 宋体 12px;
-    /*background-color: #C7EDCC;*/
-    /*background-color: #62D834;*/
     color: #34350D;
     border-color: #B0B235;
 }
@@ -46,10 +47,34 @@ GtkEntry:selected {
     border-right-color:alpha(white, 0.75);
 }
 
+#content_container .button:active,
+#content_container .button:hover{
+    background-color: #666600;
+}
+
+#content_container .button:active GtkLabel,
+#content_container .button:hover GtkLabel{
+    color: white;
+}
+
 .pane-separator {
     background-color: alpha(white, 0.80);
     background-image: linear-gradient(transparent, transparent 1px, #999 1px, #999 4px, transparent 4px);
     background-size: 40px auto;
     background-repeat: no-repeat;
     background-position: center;
+}
+
+GtkTreeView.view.progressbar{
+    color: #ffffff;
+    border-radius: 3px;
+    border:1px solid blue;
+    background-image: linear-gradient(to bottom, #3770aa);
+}
+
+GtkTreeView.view.progressbar:selected,
+GtkTreeView.view.progressbar:focus{
+    color: #3770aa;
+    box-shadow: none;
+    background-image: linear-gradient(to bottom, #ffffff);
 }

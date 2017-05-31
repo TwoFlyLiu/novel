@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 import logging
-import config
+import log
 import sys
 import os
 import subprocess
@@ -8,6 +8,7 @@ import _thread
 import threading
 import json
 import time
+from config import config
 
 from collections import deque
 
@@ -17,7 +18,8 @@ from gi.repository import Gtk, GObject, Gdk
 from gi.repository.GdkPixbuf import Pixbuf
 
 THIS_SCRIPT_DIRNAME =  os.path.dirname(os.path.abspath(__file__))
-SEARCH_EXECUTED_FILE = '../search/search'
+SEARCH_EXECUTED_FILE = './search'
+BACKEND_EXECUTED_FILE = "./backend"
 
 class Work():
 
@@ -55,6 +57,7 @@ class WorkQueue():
         return result
 
 class NovelsWidget(Gtk.Box):
+    VIEW_EXECUTED_FILE = "./view.py"
     CONTEXT_MENU = """
         <ui>
             <popup name="PopupMenu">
@@ -80,18 +83,24 @@ class NovelsWidget(Gtk.Box):
         self.icon_view.set_model(self._setup_filter())
 
         # 里面是假的数据
-        files = [e for e in os.listdir("./json") if self._is_novel(e)]
-        for  f in files:
-            pixbuf = Pixbuf.new_from_file_at_scale("./json/%s.img" %f, NovelsWidget.ICON_WIDTH, 
-                    NovelsWidget.ICON_HEIGHT, True)
-            self.list_store.append([pixbuf, f])
-        self.files = files
+        if os.path.isdir(config['novel_dirname']):
+            files = [os.path.splitext(e)[0] for e in os.listdir(config["novel_dirname"])]
+            for  f in files:
+                pixbuf = Pixbuf.new_from_file_at_scale("%s/%s%s" %(config['icon_dirname'],
+                    f, config['icon_extname']), NovelsWidget.ICON_WIDTH, 
+                        NovelsWidget.ICON_HEIGHT, True)
+                self.list_store.append([pixbuf, f])
+            self.files = files
+        else:
+            self.files = []
+        self.to_remove_icon_files = [] #当删除小说的时候，不将图标删除掉，直到程序退出的时候，才会删除
 
         sw = Gtk.ScrolledWindow()
         sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         sw.add(self.icon_view)
 
         self.icon_view.connect("button-release-event", self.on_button_release)
+        self.icon_view.connect("destroy", self.on_quit)
 
         self.search_box = Gtk.Box(margin=10, margin_right=30)
         self.search_entry = Gtk.SearchEntry(width_request=300)
@@ -131,7 +140,7 @@ class NovelsWidget(Gtk.Box):
         model = icon_view.get_model()
         iter = model.get_iter(path)
         if iter != None:
-            args = ['./NovelReader4', model[iter][1]]
+            args = [NovelsWidget.VIEW_EXECUTED_FILE, model[iter][1]]
             args.extend(sys.argv[1:])
             subprocess.Popen(args) #直接启动子进程，不捕获输出
             
@@ -141,10 +150,11 @@ class NovelsWidget(Gtk.Box):
         if ok and path != None:
             iter = model.get_iter(path)
             if iter != None:
-                f = os.popen("./NovelReader4 %s %s" %(model[iter][1], ' '.join(sys.argv[1:]))) #这儿参数也传过去
+                f = os.popen("%s %s %s" %(NovelsWidget.VIEW_EXECUTED_FILE, model[iter][1], ' '.join(sys.argv[1:]))) #这儿参数也传过去
                 f.close()
         
     def on_remove_novel(self, widget):
+        """响应右键菜单的删除操作"""
         ok, path, cell = self.icon_view.get_cursor() # 当前光标所在的path路径
         if ok and path != None:
             iter = self.filter.get_iter(path)
@@ -155,11 +165,19 @@ class NovelsWidget(Gtk.Box):
                 self.list_store.remove(child_iter) #移除图标
                 self._remove_native_novel(novel_name)
                 self.files.remove(novel_name) #移除缓存
+                self.mgr.remove_download_record(novel_name)
+
+                icon_file = "%s/%s%s" %(config['icon_dirname'], novel_name, config['icon_extname'])
+                self.to_remove_icon_files.append(icon_file)
 
     def _remove_native_novel(self, name):
         """移除本地上的书籍"""
-        os.remove("./json/%s" %name)
-        os.remove("./json/%s.img" %name)
+        os.remove("%s/%s%s" %(config['novel_dirname'], name, config['novel_extname']))
+
+    def _remove_native_icon(self):
+        """移除无效的图标"""
+        for name in self.to_remove_icon_files:
+            os.remove("%s/%s%s" %(config['icon_dirname'], name, config['icon_extname']))
 
     def on_update_novel(self, widget):
         logging.debug("update novel...")
@@ -169,19 +187,24 @@ class NovelsWidget(Gtk.Box):
             iter = model.get_iter(path)
             logging.debug("update novel '%s' from NovelsWidget" %model[iter][1])
             name = model[iter][1]
-            with open('./json/%s' %name, 'rt', encoding='utf-8') as f:
+            with open('%s/%s%s' %(config['novel_dirname'], name, config['novel_extname']), 'rt', encoding='utf-8') as f:
                 novel = json.load(f)
                 novel = {'name':novel['Name'], 'author':novel['Author'], 'op':'更新'}
                 self.mgr.download_or_update(novel)
 
 
     def remove_novel(self, novel):
+        """这个方法是DownloadWidgets来调用"""
         logging.debug("remove novel '%s'" %novel)
         iter = self._find_iter_by_name(novel)
         if iter != None:
             self.list_store.remove(iter)
             self._remove_native_novel(novel)
             self.files.remove(novel)
+
+            icon_file = "%s/%s%s" %(config['icon_dirname'], novel, config['icon_extname'])
+            self.to_remove_icon_files.append(icon_file)
+            
 
     def _find_iter_by_name(self, novel):
         iter = self.list_store.get_iter_first()
@@ -233,8 +256,12 @@ class NovelsWidget(Gtk.Box):
         self.context_menu = uimanager.get_widget("/PopupMenu")
 
     def add_novel(self, name):
+        icon_file = "%s/%s%s" %(config['icon_dirname'], name, config['icon_extname'])
+        if icon_file in self.to_remove_icon_files:
+            self.to_remove_icon_files.remove(icon_file) #表是图标又有效了
+
         if not name in self.files:
-            pixbuf = Pixbuf.new_from_file_at_scale("./json/%s.img" %name, NovelsWidget.ICON_WIDTH, 
+            pixbuf = Pixbuf.new_from_file_at_scale(icon_file, NovelsWidget.ICON_WIDTH, 
                     NovelsWidget.ICON_HEIGHT, True)
             self.list_store.append([pixbuf, name])
             self.files.append(name)
@@ -246,6 +273,11 @@ class NovelsWidget(Gtk.Box):
         logging.info("exist: %s" %(name in self.files))
         return (name in self.files)
 
+    def on_quit(self, widget):
+        """当icon_view被销毁的时候会执行（这儿程序退出才会销毁）"""
+        for icon in self.to_remove_icon_files:
+            os.remove(icon)
+
 class DownloadRecord:
     def __init__(self, name, author, value, op, now):
         self.name = name
@@ -253,6 +285,10 @@ class DownloadRecord:
         self.value = value
         self.op = op
         self.now = now
+
+    def __eq__(self, other):
+        """比较两个记录，这个版本只以书名作为key"""
+        return self.name == other.name
 
 class DownloadWidget(Gtk.ScrolledWindow):
     """download widget represent download page
@@ -269,7 +305,7 @@ class DownloadWidget(Gtk.ScrolledWindow):
 
     TEXT = 0
     PROGRESS = 1
-    DOWNLOAD_LOG_FILE = './.download_records'
+    DOWNLOAD_LOG_FILE = os.path.join(config['log_dirname'], '.download_records')
 
     def __init__(self, model, mgr):
         logging.info("build download widget...")
@@ -289,7 +325,7 @@ class DownloadWidget(Gtk.ScrolledWindow):
         self.work_queue = WorkQueue()
         self.timeout_id = GObject.timeout_add(50, self.on_timeout, None) #一直启动定时器
 
-        self.download_records = dict()
+        self.download_records = list()
         self._load_download_records()
 
         self.connect("destroy", self.on_quit)
@@ -363,8 +399,15 @@ class DownloadWidget(Gtk.ScrolledWindow):
             #
             child_iter = self.filter.convert_iter_to_child_iter(selected_iter)
             logging.debug("model novel:%s" %self.model[child_iter][0])
-            del self.download_records[self.model[child_iter][0]]
+
+            self._remove_record_from_download_records_by_name(self.model[child_iter][0])
             self.model.remove(child_iter)
+
+    def _remove_record_from_download_records_by_name(self, name):
+        for record in self.download_records:
+            if record.name == name:
+                self.download_records.remove(record)
+                break
 
     def get_selected_novel(self):
         _, selected_iter = self.selection.get_selected()
@@ -451,9 +494,9 @@ class DownloadWidget(Gtk.ScrolledWindow):
         #对于filter, 他的本质上是model的包装类，
         #但是对于filter，当你在model尾部添加新的元素的时候，filter中上次保存拍的迭代器(iter)就会失效
         #但是对于model则不会失效
-        _thread.start_new_thread(self.work, (child_iter, 2, novel, now))
+        _thread.start_new_thread(self.novel_work, (child_iter, 2, novel, now))
 
-    def work(self, iter, index, novel, now):
+    def novel_work(self, iter, index, novel, now):
         """进行下载
         """
         with self._do_download_or_update(novel) as f:
@@ -463,12 +506,11 @@ class DownloadWidget(Gtk.ScrolledWindow):
                 self.work_queue.push(Work(iter, index, value))
                 if len(line) == 0:
                     break
-                # 我可以在这里面抓进度，项支持断点下载, 但是关键要保证novel_download底层支持
 
         self.on_download_done(novel['name'])
         logging.info("Download %s done" %novel["name"])
-        self.download_records[novel['name']] = DownloadRecord(novel['name'], novel['author'],
-                100, novel['op'], now)
+        self.download_records.append(DownloadRecord(novel['name'], novel['author'],
+                100, novel['op'], now))
 
     def extract_value(self, line):
         try:
@@ -480,10 +522,12 @@ class DownloadWidget(Gtk.ScrolledWindow):
     def _do_download_or_update(self, novel):
         if novel['op'] == "更新": #存在则进行更新
             logging.info("Update novel %s" %novel['name'])
-            return os.popen("./novel_update %s" %novel['name'])
+            return os.popen("%s -u -d '%s' -e '%s' -ld '%s' %s" %(BACKEND_EXECUTED_FILE, config['novel_dirname'],
+                config['novel_extname'], config['log_dirname'], novel['name']))
         elif novel['op'] == "下载": #否则才是下载
             logging.info("Download novel %s" %novel['name'])
-            return os.popen("./novel_download_by_url %s" %novel["url"])
+            return os.popen("%s -g -d '%s' -e '%s' -ld '%s' %s" %(BACKEND_EXECUTED_FILE, config['novel_dirname'],
+                config['novel_extname'], config['log_dirname'], novel['url']))
 
     def on_timeout(self, user_data):
         """到了时间，有任务就做活，没有任务就什么都不干"""
@@ -505,20 +549,19 @@ class DownloadWidget(Gtk.ScrolledWindow):
             line = line.strip()
             record = line.split('|')
             logging.debug("record: %s" %record)
-            self.download_records[record[0]] = DownloadRecord(record[0], record[1], int(record[2]), record[3], record[4])
-            logging.debug("The count of download records is %d" %len(self.download_records))
+            self.download_records.append(DownloadRecord(record[0], record[1], int(record[2]), record[3], record[4]))
+
+        logging.debug("The count of download records is %d" %len(self.download_records))
         f.close()
 
         # 将上次的操作写到liststore中
-        for key in self.download_records:
-            value = self.download_records[key]
+        for value in self.download_records:
             self.model.append([value.name, value.author, value.value, value.op, value.now])
 
 
     def _save_download_records(self):
         f = open(DownloadWidget.DOWNLOAD_LOG_FILE, "w")
-        for key in self.download_records:
-            value = self.download_records[key]
+        for value in self.download_records:
             f.write('%s|%s|%d|%s|%s\n' %(value.name, value.author, value.value, value.op, value.now))
 
     def on_quit(self, widget):
@@ -530,7 +573,10 @@ class DownloadWidget(Gtk.ScrolledWindow):
         iter = self._find_novel_name(name)
         if iter != None:
             self.model.remove(iter)
-            del self.download_records[name]
+
+            # 讲该记录从内存中移除掉
+            self._remove_record_from_download_records_by_name(name)
+
 
     def _find_novel_name(self, name):
         iter = self.model.get_iter_first()
@@ -594,7 +640,8 @@ class SearchWidget:
         """do search operation
         """
         logging.info('search novel "%s"' %self.search_content.get_text())
-        result = subprocess.check_output([SEARCH_EXECUTED_FILE, self.search_content.get_text()])
+        result = subprocess.check_output([SEARCH_EXECUTED_FILE, '-id', config['icon_dirname'],
+            '-ie', config['icon_extname'], '-ld', config['log_dirname'], self.search_content.get_text()])
         result = result.decode('utf-8')
         result = result.strip()
 
@@ -780,8 +827,54 @@ class MainWindow:
     def remove_novel(self, novel_name):
         self.novels_widget.remove_novel(novel_name)
 
+    def remove_download_record(self, novel_name):
+        """这个方法主要是由NovelsWidget调用，当NovelsWidget通过右键菜单删除一个项的时候，那么下载记录也要进行更新"""
+        self.download_widget.remove_download_record(novel_name)
+
+LAST_STARTUP_DATE_FILE = ".last_startup_datetime"
+FULL_LAST_STARTUP_DATE_FILE_PATH = "%s/%s" %(config['log_dirname'], LAST_STARTUP_DATE_FILE)
+FULL_IGNORE_HOST_FILE_PATH = "%s/%s" %(config['log_dirname'], config['ignore_host_file'])
+def remove_ignore_host_file():
+    logging.info("retry remove native ignored host file '%s'" %FULL_IGNORE_HOST_FILE_PATH)
+    if os.path.isfile(FULL_IGNORE_HOST_FILE_PATH):
+        logging.info("remove ignored host file '%s'" %FULL_IGNORE_HOST_FILE_PATH)
+        os.remove(FULL_IGNORE_HOST_FILE_PATH)
+
+
+DATE_FMT = '%Y-%m-%d'
+def init_ignored_host_list():
+    # 检测上次程序运行日期是否设置，如果没有设置，则进行设置
+    # 并且清除掉原来的.ignore_host_file文件。如果已经设置则比较
+    # 当前时间和上一次时间是否一样，如果不一样，则重新设置当前时间
+    # 并且清除掉原来的.ignore_host_file，否则什么也不做
+    #
+    # 实现效果，只有每一天都会重新对网站源进行过滤操作，防止
+    # 上一次变慢的网站下载速度，现在变快了
+    #
+    # 实现效果就是一天重新过滤一次ignored_host_file文件
+    if not os.path.isfile(FULL_LAST_STARTUP_DATE_FILE_PATH):
+        remove_ignore_host_file()
+    else:
+        with open(FULL_LAST_STARTUP_DATE_FILE_PATH, 'rt', encoding='utf-8') as f:
+            last_date_str = f.readline()
+            last_date = time.strptime(last_date_str, DATE_FMT)
+            now_date = time.strptime(time.strftime(DATE_FMT), DATE_FMT)
+            if last_date != now_date:
+                remove_ignore_host_file()
+            else:
+                return
+
+    with open(FULL_LAST_STARTUP_DATE_FILE_PATH, 'w', encoding='utf-8') as f:
+        logging.info("update current startup date to native '%s'" %LAST_STARTUP_DATE_FILE)
+        f.write(time.strftime(DATE_FMT))
+    
+
 def main():
-    config.config()
+    log.config()
+    init_ignored_host_list()
+
+    if not os.path.isdir(config['log_dirname']):
+        os.makedirs(config['log_dirname'])
 
     win = MainWindow()
     win.show()

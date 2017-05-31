@@ -18,18 +18,23 @@ type SearchResult struct {
 func main() {
 	var verbose bool
 	var iconDirName, iconExt string
+	var logDirName string
 	flag.BoolVar(&verbose, "verbose", false, "enable debug information")
 	flag.StringVar(&iconDirName, "id", "./icons", "icon directory name")
 	flag.StringVar(&iconExt, "ie", ".img", "icon extension name")
+	flag.StringVar(&logDirName, "ld", ".", "base dir name")
 	flag.Parse()
 
 	if flag.NArg() == 0 {
-		fmt.Fprintf(os.Stderr, "Usage: %s [-verbose] 小说名称", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s [-verbose] [-id 最终图标保存的目录名] [-ie 图标拓展名] [-ld 记录目录名称] 小说名称", os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	mgr := engine.NewDefaultEngine(verbose, "", "", iconDirName, iconExt)
+	if len(logDirName) > 1 && logDirName[len(logDirName)-1] == '/' {
+		logDirName = logDirName[0 : len(logDirName)-1]
+	}
+	mgr := engine.NewDefaultEngine(verbose, "", "", iconDirName, iconExt, logDirName)
 	urls := mgr.SearchSite(flag.Arg(0))
 	log := mgr.GetLogger()
 

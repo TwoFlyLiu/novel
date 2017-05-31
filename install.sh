@@ -25,12 +25,20 @@ install() {
             echo build search...
             cd search
             go build 
+            result=$?
+            if [[ $result -eq '0' ]]; then
+                mv ./search ../novel
+            fi
             cd ..
             ;;
         "backend")
             echo build backend...
             cd backend
             go build
+            result=$?
+            if [[ $result -eq '0' ]]; then
+                mv ./backend ../novel
+            fi
             cd ..
             ;;
         "all")

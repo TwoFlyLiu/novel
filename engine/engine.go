@@ -43,13 +43,17 @@ type Engine struct {
 //iconSuffix - 保存的图标的扩展名
 func NewEngine(downloader Downloader, dao Dao, verbose bool,
 	threshold int64, novelDirName string, novelSuffix string,
-	iconDirName string, iconSuffix string, maxRetries int) *Engine {
+	iconDirName string, iconSuffix string, maxRetries int, baseDirName string) *Engine {
 	configLog(verbose) //配置日志
+
+	config.SetBaseDirName(baseDirName) //必须先配置他，然后才能够加载
 	GlobalSiteSearcher.loadIgnoredHosts()
 
-	// 去除拓展名中开始的.
-	if len(novelSuffix) > 1 && novelSuffix[0] == '.' {
-		novelSuffix = novelSuffix[1:]
+	if len(novelSuffix) > 0 && novelSuffix[0] != '.' {
+		novelSuffix = "." + novelSuffix
+	}
+	if len(iconSuffix) > 0 && iconSuffix[0] != '.' {
+		iconSuffix = "." + iconSuffix
 	}
 	return &Engine{downloader: downloader, dao: dao, threshold: threshold,
 		novelDirName: novelDirName, novelSuffix: novelSuffix, maxRetries: maxRetries,
@@ -61,10 +65,10 @@ func NewEngine(downloader Downloader, dao Dao, verbose bool,
 //
 //verbose - enable debug information
 func NewDefaultEngine(verbose bool, novelDirName string, novelSuffix string,
-	iconDirName string, iconSuffix string) *Engine {
+	iconDirName string, iconSuffix string, baseDirName string) *Engine {
 	return NewEngine(NewDefaultDownloader(),
 		NewJsonNovelDao(), verbose, 3, novelDirName, novelSuffix,
-		iconDirName, iconSuffix, 3)
+		iconDirName, iconSuffix, 3, baseDirName)
 }
 
 //Set threshold time of extract base info from url in second
@@ -78,7 +82,9 @@ func (engine *Engine) SetThreshold(threshold int64) {
 //return novel finally novel. err is to achieve error information if an error has occurred.
 func (engine *Engine) NovelByName(name string) (novel *Novel, err error) {
 	log.Debugf("Got novel by name %q", name)
-	novel, err = engine.dao.LoadNovel(engine.novelDirName + SEP + name + "." + engine.novelSuffix) //先从本地获取
+	fullpath := engine.novelDirName + SEP + name + engine.novelSuffix
+	log.Debugf("Fullpath: %q", fullpath)
+	novel, err = engine.dao.LoadNovel(fullpath) //先从本地获取
 
 	// 当不存在，再从远程获取
 	if err != nil {
@@ -178,6 +184,7 @@ func MustSelectSuitableExtracter(url string) (extracter Extracter) {
 
 // SyncNovel - update the content of novel to newest and save novel to native
 func (engine *Engine) SyncNovel(novel *Novel) {
+	log.Info("Sync Novel %q", novel.Name)
 	lastMenuItem := novel.Menus[len(novel.Menus)-1]
 
 	extracter := MustSelectSuitableExtracter(lastMenuItem.URL)

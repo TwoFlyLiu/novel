@@ -95,6 +95,7 @@
     <property name="title" translatable="yes">Novel</property>
     <property name="default_width">1080</property>
     <property name="default_height">650</property>
+    <property name="icon">icon.png</property>
     <signal name="destroy" handler="on_quit" swapped="no"/>
     <child>
       <object class="GtkPaned" id="main_container">
