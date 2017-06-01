@@ -641,7 +641,7 @@ class SearchWidget:
         """
         logging.info('search novel "%s"' %self.search_content.get_text())
         result = subprocess.check_output([SEARCH_EXECUTED_FILE, '-id', config['icon_dirname'],
-            '-ie', config['icon_extname'], '-ld', config['log_dirname'], self.search_content.get_text()])
+            '-ie', config['icon_extname'], '-ld', config['log_dirname'], self.search_content.get_text().strip()])
         result = result.decode('utf-8')
         result = result.strip()
 
@@ -693,6 +693,7 @@ class SearchWidget:
 
     def on_download_or_update(self, button):
         self.mgr.download_or_update(self.novel)
+        self.search_result_container.hide()
 
     def show(self):
         self.widget.show()

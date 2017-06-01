@@ -109,6 +109,8 @@ class NovelWindow():
 
     def arange_novel_content(self):
         for chapter in self.novel["Chapters"]:
+            if chapter == None:#防止某些网站上小说页面出现异常情况
+                continue
             chapter["Content"] = self._handle_novel_content(chapter["Content"])
 
     def _handle_novel_content(self, content):
