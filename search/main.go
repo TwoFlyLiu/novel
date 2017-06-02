@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/twoflyliu/novel3/engine"
-	_ "github.com/twoflyliu/novel3/extracter"
+	"github.com/twoflyliu/novel/engine"
+	_ "github.com/twoflyliu/novel/extracter"
 )
 
 type SearchResult struct {

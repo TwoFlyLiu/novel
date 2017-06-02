@@ -5,7 +5,7 @@ import "os"
 
 import "bufio"
 
-import "github.com/twoflyliu/novel3/tool"
+import "github.com/twoflyliu/novel/tool"
 
 type Searcher interface {
 	Search(name string) []string

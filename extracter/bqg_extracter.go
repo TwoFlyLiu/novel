@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/twoflyliu/novel3/engine"
+	"github.com/twoflyliu/novel/engine"
 )
 
 type BiqugeExtracter struct{}
