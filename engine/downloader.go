@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/twoflyliu/novel2/tool"
+	"github.com/twoflyliu/novel/tool"
 )
 
 // Downloader提供从互联网上下载制定url页面的的能力

@@ -1,4 +1,4 @@
-package common
+package common //包名称和目录名称未必要一样
 
 import (
 	//"fmt"
