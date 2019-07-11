@@ -9,6 +9,12 @@ PWD_DIR=$(pwd)
 
 install() {
     case $1 in
+        "tool")
+            echo install tool...
+            cd tool
+            go install
+            cd ..
+            ;;
         "engine")
             echo install engine...
             cd engine
@@ -42,6 +48,7 @@ install() {
             cd ..
             ;;
         "all")
+            install tool
             install engine
             install extracter
             install search
