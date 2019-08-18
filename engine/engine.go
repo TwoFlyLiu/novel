@@ -13,8 +13,10 @@ import (
 )
 
 const (
-	MAX_RETRIES_COUNT = 5  //maximum numbers of downloads
-	THREAD_COUNT      = 15 //the number of threads per download and extract task
+	MAX_RETRIES_COUNT                   = -1 //maximum numbers of downloads
+	THREAD_COUNT                        = 15 //the number of threads per download and extract task
+	DEFAULT_THRESHOLD                   = 3  //
+	ENABLE_EXPIRE_THRESHOLD_REMOVE_ITEM = false
 )
 
 //Engine is a entry of full engine package, which is actually a service class.
@@ -67,8 +69,8 @@ func NewEngine(downloader Downloader, dao Dao, verbose bool,
 func NewDefaultEngine(verbose bool, novelDirName string, novelSuffix string,
 	iconDirName string, iconSuffix string, baseDirName string) *Engine {
 	return NewEngine(NewDefaultDownloader(),
-		NewJsonNovelDao(), verbose, 3, novelDirName, novelSuffix,
-		iconDirName, iconSuffix, 3, baseDirName)
+		NewJsonNovelDao(), verbose, DEFAULT_THRESHOLD, novelDirName, novelSuffix,
+		iconDirName, iconSuffix, MAX_RETRIES_COUNT, baseDirName)
 }
 
 //Set threshold time of extract base info from url in second
@@ -168,7 +170,7 @@ func (engine *Engine) BaseInfoByURL(netURL string) (novel *Novel, err error) {
 	engine.constructNovelBase(fullPage, novel, extracter)
 	end := time.Now().Unix()
 
-	if end-start > engine.threshold {
+	if ENABLE_EXPIRE_THRESHOLD_REMOVE_ITEM && end-start > engine.threshold {
 		GlobalSiteSearcher.RemoveItem(addr.Host)
 	}
 	return

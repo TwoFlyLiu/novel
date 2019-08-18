@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/twoflyliu/novel/engine"
 	_ "github.com/twoflyliu/novel/extracter"
@@ -38,50 +37,51 @@ func main() {
 	urls := mgr.SearchSite(flag.Arg(0))
 	log := mgr.GetLogger()
 
-	var results []SearchResult
+	log.Debug("Search Urls:", urls)
+
+	ch := make(chan *engine.Novel, len(urls))
 
 	for _, url := range urls {
-		start := time.Now().UnixNano()
-		novel, err := mgr.BaseInfoByURL(url)
-		end := time.Now().UnixNano()
-
-		if err != nil {
-			log.Info("URL:", url, "error:", err)
-			continue
-		}
-		results = append(results, SearchResult{novel, end - start})
-
-		log.Info("MenuURL:", novel.MenuURL)
-		log.Info("Name:", novel.Name)
-		log.Info("Author:", novel.Author)
-		log.Info("LastUpdateTime:", novel.LastUpdateTime)
-		log.Info("NewestChapter:", novel.NewestLastChapterName)
-		log.Info("Description:", novel.Description)
-		log.Info("Time:", end-start)
-		log.Info("\n\n\n")
+		go func(url string) {
+			novel, err := mgr.BaseInfoByURL(url)
+			if err != nil {
+				log.Info("URL:", url, "error:", err)
+				ch <- nil
+			} else {
+				ch <- novel
+			}
+		}(url)
 	}
 
-	if len(results) == 0 {
-		fmt.Println("None") //表示没有结果
+	var novel *engine.Novel
+	for i := 0; i < len(urls); i++ {
+		novel = <-ch
+		if novel != nil {
+			break
+		}
+	}
+
+	if novel == nil {
+		fmt.Println("None")
 		return
 	}
 
-	// 找到下载速度最快的源，并且将接口通过命令行来返回
-	minPos := 0
-	for i := 1; i < len(results); i++ {
-		if results[minPos].time > results[minPos].time {
-			minPos = i
-		}
-	}
+	log.Info("MenuURL:", novel.MenuURL)
+	log.Info("Name:", novel.Name)
+	log.Info("Author:", novel.Author)
+	log.Info("LastUpdateTime:", novel.LastUpdateTime)
+	log.Info("NewestChapter:", novel.NewestLastChapterName)
+	log.Info("Description:", novel.Description)
+	log.Info("\n\n\n")
 
 	// 下载小说对应的图标, 先写出图标
-	mgr.DownloadAndSaveIcon(results[minPos].novel)
+	mgr.DownloadAndSaveIcon(novel)
 
 	// 然后输出搜索结果
 	if len(iconExt) > 0 && iconExt[0] != '.' {
 		iconExt = "." + iconExt
 	}
-	fmt.Printf("%s|%s|%s|%s|%s|%s\n", results[minPos].novel.MenuURL, results[minPos].novel.Name,
-		results[minPos].novel.Author, results[minPos].novel.Description, results[minPos].novel.NewestLastChapterName,
-		iconDirName+"/"+results[minPos].novel.Name+iconExt)
+	fmt.Printf("%s|%s|%s|%s|%s|%s\n", novel.MenuURL, novel.Name,
+		novel.Author, novel.Description, novel.NewestLastChapterName,
+		iconDirName+"/"+novel.Name+iconExt)
 }

@@ -1,0 +1,20 @@
+[Desktop Entry]                                                                 
+Name=Novel
+GenericName=Novel Searcher Downloader Viewer
+X-GNOME-FullName=Novel
+Comment=Search, download and view novel together
+Keywords=GUI application;novel searcher;novel downloader;novel viewer;
+Exec=/usr/bin/novel
+Terminal=false
+StartupNotify=true
+Type=Application
+Icon=/usr/bin/novel-0.0.2/icon.png
+Categories=GNOME;GTK;Network;
+#MimeType=application/x-glade;
+#X-GNOME-DocPath=glade/glade.xml
+X-GNOME-Bugzilla-Bugzilla=GNOME
+X-GNOME-Bugzilla-Product=novel
+X-GNOME-Bugzilla-Version=0.0.2
+X-GNOME-Bugzilla-Component=general
+X-Ubuntu-Gettext-Domain=novel
+

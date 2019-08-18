@@ -2,38 +2,40 @@
 @import url("./view.css");
 
 * { 
-    font: 宋体 12px;
+    font: 16px "宋体";
     color: #34350D;
     border-color: #B0B235;
 }
 
 .view, #content_container {
+    background-image: none;
     background-color: lighter(#B0B235);
 }
 
-GtkTreeView:hover, GtkIconView:hover {
+treeview:hover, iconview:hover {
+    background-image: none;
     background-color: #D5D820;
 }
 
-GtkTreeView:selected, GtkIconView:selected {
+treeview:selected, iconview:selected {
     /*background-color: #D5D820;*/
     background-color: #4F94CC;
     color: #FEFE00;
 }
 
-GtkEntry {
+entry {
     border:1px solid white;
     background-color: white;
     padding: 5px;
     border-radius: 2px;
 }
 
-GtkEntry:selected {
+entry selection {
     background-color: blue;
     color: white;
 }
 
-.button {
+button {
     color: black;
     padding: 5px;
     border-radius: 2px;
@@ -43,17 +45,17 @@ GtkEntry:selected {
     background-color: #B0B235;
 }
 
-#content_container .button {
+#content_container button {
     border-right-color:alpha(white, 0.75);
 }
 
-#content_container .button:active,
-#content_container .button:hover{
+#content_container button:active,
+#content_container button:hover{
     background-color: #666600;
 }
 
-#content_container .button:active GtkLabel,
-#content_container .button:hover GtkLabel{
+#content_container button:active GtkLabel,
+#content_container button:hover GtkLabel{
     color: white;
 }
 
@@ -65,16 +67,16 @@ GtkEntry:selected {
     background-position: center;
 }
 
-GtkTreeView.view.progressbar{
+treeview.view.progressbar{
     color: #ffffff;
     border-radius: 3px;
     border:1px solid blue;
-    background-image: linear-gradient(to bottom, #3770aa);
+    background-image: linear-gradient(to bottom, #3770aa, #3770aa);
 }
 
-GtkTreeView.view.progressbar:selected,
-GtkTreeView.view.progressbar:focus{
+treeview.view.progressbar:selected,
+treeview.view.progressbar:focus{
     color: #3770aa;
     box-shadow: none;
-    background-image: linear-gradient(to bottom, #ffffff);
+    background-image: linear-gradient(to bottom, #ffffff, #ffffff);
 }

@@ -1,0 +1,9 @@
+Package: novel
+Version: 0.0.1-2017.05.30
+Section: non-free/utils
+Priority: optional
+Depends: python-gi, python-gi-cairo, python3-gi, python3-gi-cairo, gir1.2-gtk-3.0
+Architecture: i386
+Maintainer: twoflyliu <twoflyliu@gmail.com>
+Provides: twoflyliu
+Description: An online search, download and view novel application

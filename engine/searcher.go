@@ -34,6 +34,11 @@ func (ss *SiteSearcher) AddItem(fmtSearchString string, escape bool, gbk bool, h
 
 func (ss *SiteSearcher) RemoveItem(host string) {
 	index := -1
+
+	if len(ss.items) == 1 { //防止被删光了
+		return
+	}
+
 	for i := 0; i < len(ss.items); i++ {
 		if host == ss.items[i].host {
 			index = i
@@ -103,16 +108,43 @@ func (ss *SiteSearcher) addIgnoredHost(host string) {
 
 func (ss *SiteSearcher) Search(name string) []string {
 	result := make([]string, 0)
-	for _, item := range ss.items {
-		extracter := AutoSelectExtracter(item.host)
-		searchURL := ss.mkSearchURL(item, name)
-		searchContent, err := NewDefaultDownloader().Download(searchURL, MAX_RETRIES_COUNT)
-		CheckError(err)
+	downloader := NewDefaultDownloader()
 
-		if objURL, ok := extracter.ExtractObjURL(name, searchContent); ok {
+	ch := make(chan string, len(ss.items))
+
+	for _, item := range ss.items {
+
+		go func(item *SearcherItem, ch chan string) {
+			extracter := AutoSelectExtracter(item.host)
+			searchURL := ss.mkSearchURL(item, name)
+			searchContent, err := downloader.Download(searchURL, MAX_RETRIES_COUNT)
+			if err != nil {
+				ch <- "none"
+			}
+
+			if err != nil {
+				ch <- "none"
+			} else if objURL, ok := extracter.ExtractObjURL(name, searchContent); ok {
+				objURL = tool.FixUrl(objURL, searchURL)
+				ch <- objURL
+				log.Debugf("search url: %s -> %s", searchURL, objURL)
+				return
+			} else {
+				ch <- "none"
+			}
+
+			log.Debugf("search url: %s -> none", searchURL)
+		}(item, ch)
+	}
+
+	for i := 0; i < len(ss.items); i++ {
+		objURL := <-ch
+		if objURL != "none" {
 			result = append(result, objURL)
+			break //只要找到一个就可以
 		}
 	}
+
 	return result
 }
 

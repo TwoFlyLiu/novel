@@ -1,0 +1,80 @@
+@import url("./reset.css");
+@import url("./view.css");
+
+* { 
+    font: 宋体 12px;
+    color: #34350D;
+    border-color: #B0B235;
+}
+
+.view, #content_container {
+    background-color: lighter(#B0B235);
+}
+
+GtkTreeView:hover, GtkIconView:hover {
+    background-color: #D5D820;
+}
+
+GtkTreeView:selected, GtkIconView:selected {
+    /*background-color: #D5D820;*/
+    background-color: #4F94CC;
+    color: #FEFE00;
+}
+
+GtkEntry {
+    border:1px solid white;
+    background-color: white;
+    padding: 5px;
+    border-radius: 2px;
+}
+
+GtkEntry:selected {
+    background-color: blue;
+    color: white;
+}
+
+.button {
+    color: black;
+    padding: 5px;
+    border-radius: 2px;
+    transition: all 250ms ease-in;
+    /*border: 1px transparent solid;*/
+    border:1px solid #B0B235;
+    background-color: #B0B235;
+}
+
+#content_container .button {
+    border-right-color:alpha(white, 0.75);
+}
+
+#content_container .button:active,
+#content_container .button:hover{
+    background-color: #666600;
+}
+
+#content_container .button:active GtkLabel,
+#content_container .button:hover GtkLabel{
+    color: white;
+}
+
+.pane-separator {
+    background-color: alpha(white, 0.80);
+    background-image: linear-gradient(transparent, transparent 1px, #999 1px, #999 4px, transparent 4px);
+    background-size: 40px auto;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+GtkTreeView.view.progressbar{
+    color: #ffffff;
+    border-radius: 3px;
+    border:1px solid blue;
+    background-image: linear-gradient(to bottom, #3770aa);
+}
+
+GtkTreeView.view.progressbar:selected,
+GtkTreeView.view.progressbar:focus{
+    color: #3770aa;
+    box-shadow: none;
+    background-image: linear-gradient(to bottom, #ffffff);
+}

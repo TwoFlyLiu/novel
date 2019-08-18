@@ -1,0 +1,82 @@
+@import url("./reset.css");
+@import url("./view.css");
+
+* { 
+    font: 16px "宋体";
+    color: #34350D;
+    border-color: #B0B235;
+}
+
+.view, #content_container {
+    background-image: none;
+    background-color: lighter(#B0B235);
+}
+
+treeview:hover, iconview:hover {
+    background-image: none;
+    background-color: #D5D820;
+}
+
+treeview:selected, iconview:selected {
+    /*background-color: #D5D820;*/
+    background-color: #4F94CC;
+    color: #FEFE00;
+}
+
+entry {
+    border:1px solid white;
+    background-color: white;
+    padding: 5px;
+    border-radius: 2px;
+}
+
+entry selection {
+    background-color: blue;
+    color: white;
+}
+
+button {
+    color: black;
+    padding: 5px;
+    border-radius: 2px;
+    transition: all 250ms ease-in;
+    /*border: 1px transparent solid;*/
+    border:1px solid #B0B235;
+    background-color: #B0B235;
+}
+
+#content_container button {
+    border-right-color:alpha(white, 0.75);
+}
+
+#content_container button:active,
+#content_container button:hover{
+    background-color: #666600;
+}
+
+#content_container button:active GtkLabel,
+#content_container button:hover GtkLabel{
+    color: white;
+}
+
+.pane-separator {
+    background-color: alpha(white, 0.80);
+    background-image: linear-gradient(transparent, transparent 1px, #999 1px, #999 4px, transparent 4px);
+    background-size: 40px auto;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+treeview.view.progressbar{
+    color: #ffffff;
+    border-radius: 3px;
+    border:1px solid blue;
+    background-image: linear-gradient(to bottom, #3770aa, #3770aa);
+}
+
+treeview.view.progressbar:selected,
+treeview.view.progressbar:focus{
+    color: #3770aa;
+    box-shadow: none;
+    background-image: linear-gradient(to bottom, #ffffff, #ffffff);
+}

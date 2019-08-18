@@ -11,10 +11,14 @@ import (
 	"github.com/twoflyliu/novel/engine"
 )
 
-type BiqugeExtracter struct{}
+type BiqugeExtracter struct {
+	searchObjUrlPattern string
+}
 
-func NewExtracter() engine.Extracter {
-	return new(BiqugeExtracter)
+func NewExtracter(searchObjUrlPattern string) engine.Extracter {
+	return &BiqugeExtracter{
+		searchObjUrlPattern: searchObjUrlPattern,
+	}
 }
 
 const (
@@ -35,12 +39,17 @@ const (
 	CHINESE_SEC_STR                              = "："      //中文分号字符
 	CHINESE_SEC_LEN                              = len("：") //中文分号长度
 
-	SEARCH_OBJ_URL_PATTERN_STR = `\<a\s+cpos="title"\s*href="(.+?)"\s*title="%s"`
-
 	BQG_SEARCH_FORM_FIND                   = `\<form\s+id="bdcs-search-form"[\s\S]+?\</form\>`
 	BQG_SEARCH_FORM_ACTION_METHOD_SUBMATCH = `\<form\s+id="bdcs-search-form"\s+action="([\s\S]+?)"\s+method="([\s\S]+?)"`
 	BQG_SEARCH_FORM_HIDDEN_VALUE_SUBMATCH  = `\<input\s+name="(\w+)"\s+value="(\w+)"\s+type="hidden"\s*\>`
 	BQG_SEARCH_FORM_NAME_FIELD_SUBMATCH    = `\<input[\s\S]+?name=(\w+)[\s\S]+?type="text"`
+)
+
+// 各个网站搜索URL
+const (
+	SEARCH_OBJ_URL_PATTERN_37ZW_STR = `\<a\s+href="([^"]+)"\s+target="_blank"\>\s*%s\s*\</a\>`                                                                                       //37中文网
+	SEARCH_OBJ_URL_PATTERN_QU_STR   = `\<a\s+href="([^"]+)"\s+target="_blank"\>\s*%s\s*\</a\>`                                                                                       //笔趣阁
+	SEARCH_OBJ_URL_PATTERN_XBQG_STR = `\<a\s+cpos="title"\s+href="([^"]+)" title="\s*%s\s*"\s+class="result-game-item-title-link"\s+target="_blank">[^<]*\<span\>\s*%[1]s\s*</span>` //新笔趣阁
 )
 
 var (
@@ -200,9 +209,12 @@ func (extracter *BiqugeExtracter) ExtractSearchFormSearchFieldName(fullPage stri
 }
 
 func (extracter *BiqugeExtracter) ExtractObjURL(name string, searchPage string) (string, bool) {
-	fullSearchString := fmt.Sprintf(SEARCH_OBJ_URL_PATTERN_STR, name)
+	fullSearchString := fmt.Sprintf(extracter.searchObjUrlPattern, name)
 	searchObjUrlPattern := regexp.MustCompile(fullSearchString)
 	matches := searchObjUrlPattern.FindStringSubmatch(searchPage)
+
+	//fmt.Printf("pattern: %s", searchObjUrlPattern)
+	//fmt.Printf("searchPage:%s", searchPage)
 
 	if len(matches) > 1 {
 		return matches[1], true
@@ -244,51 +256,61 @@ func (extracter *BiqugeExtracter) ExtractNovelDescription(menuPage string) (desc
 
 // 使用一种自注册技术
 func init() {
-	var err error
-	novelNamePatternSubMatch, err = regexp.Compile(NOVEL_NAME_PATTERN_SUBMATCH)
-	engine.CheckError(err)
-	novelAuthorPatternSubMatch, err = regexp.Compile(NOVEL_AUTHOR_PATTERN_SUBMATCH)
-	engine.CheckError(err)
-	novelLastUpdateTimePatternSubMatch, err = regexp.Compile(NOVEL_LASTUPDATETIME_PATTERN_SUBMATCH)
-	engine.CheckError(err)
-	novelDescriptionPatternSubMatch, err = regexp.Compile(NOVEL_DESCRIPTION_PATTERN_SUBMATCH)
-	engine.CheckError(err)
-	novelNewestLastChapterNamePatternSubMatch, err = regexp.Compile(NOVEL_NEWESTLASTCHAPTERNAME_PATTERN_SUBMATCH)
-	engine.CheckError(err)
-	novelIconUrlPatternSubMatch, err = regexp.Compile(NOVEL_ICON_URL_PATTERN_SUBMATCH)
-	engine.CheckError(err)
-	menuListPatternFind, err = regexp.Compile(MENULIST_PATTERN_FIND)
-	engine.CheckError(err)
-	menuItemPatternSubMatch, err = regexp.Compile(MENUITEM_PATTERN_SUBMATCH)
-	engine.CheckError(err)
-	chapterTitlePatternSubMatch, err = regexp.Compile(CHAPTERTITLE_PATTERN_SUBMATCH)
-	engine.CheckError(err)
-	chapterContentPatternSubMatch, err = regexp.Compile(CHAPTERCONTENT_PATTERN_SUBMATCH)
-	engine.CheckError(err)
-	brPatternReplaceNewLine, err = regexp.Compile(BR_PATTERN_REPLACE_NEWLINE)
-	engine.CheckError(err)
-	escapePatternRemove, err = regexp.Compile(ESCAPE_PATTERN_REMOVE)
-	engine.CheckError(err)
-	divPatternRemove, err = regexp.Compile(DIV_PATTERN_REMOVE)
-	engine.CheckError(err)
-	scriptPatternRemove, err = regexp.Compile(SCRIPT_PATTERN_REMOVE)
-	engine.CheckError(err)
+	/*
+		var err error
+		novelNamePatternSubMatch, err = regexp.Compile(NOVEL_NAME_PATTERN_SUBMATCH)
+		engine.CheckError(err)
+		novelAuthorPatternSubMatch, err = regexp.Compile(NOVEL_AUTHOR_PATTERN_SUBMATCH)
+		engine.CheckError(err)
+		novelLastUpdateTimePatternSubMatch, err = regexp.Compile(NOVEL_LASTUPDATETIME_PATTERN_SUBMATCH)
+		engine.CheckError(err)
+		novelDescriptionPatternSubMatch, err = regexp.Compile(NOVEL_DESCRIPTION_PATTERN_SUBMATCH)
+		engine.CheckError(err)
+		novelNewestLastChapterNamePatternSubMatch, err = regexp.Compile(NOVEL_NEWESTLASTCHAPTERNAME_PATTERN_SUBMATCH)
+		engine.CheckError(err)
+		novelIconUrlPatternSubMatch, err = regexp.Compile(NOVEL_ICON_URL_PATTERN_SUBMATCH)
+		engine.CheckError(err)
+		menuListPatternFind, err = regexp.Compile(MENULIST_PATTERN_FIND)
+		engine.CheckError(err)
+		menuItemPatternSubMatch, err = regexp.Compile(MENUITEM_PATTERN_SUBMATCH)
+		engine.CheckError(err)
+		chapterTitlePatternSubMatch, err = regexp.Compile(CHAPTERTITLE_PATTERN_SUBMATCH)
+		engine.CheckError(err)
+		chapterContentPatternSubMatch, err = regexp.Compile(CHAPTERCONTENT_PATTERN_SUBMATCH)
+		engine.CheckError(err)
+		brPatternReplaceNewLine, err = regexp.Compile(BR_PATTERN_REPLACE_NEWLINE)
+		engine.CheckError(err)
+		escapePatternRemove, err = regexp.Compile(ESCAPE_PATTERN_REMOVE)
+		engine.CheckError(err)
+		divPatternRemove, err = regexp.Compile(DIV_PATTERN_REMOVE)
+		engine.CheckError(err)
+		scriptPatternRemove, err = regexp.Compile(SCRIPT_PATTERN_REMOVE)
+		engine.CheckError(err)
 
-	bqgSearchFormFind = regexp.MustCompile(BQG_SEARCH_FORM_FIND)
-	bqgSearchFormActionMethodSubmatch = regexp.MustCompile(BQG_SEARCH_FORM_ACTION_METHOD_SUBMATCH)
-	bqgSearchFormHiddenValueSubmatch = regexp.MustCompile(BQG_SEARCH_FORM_HIDDEN_VALUE_SUBMATCH)
-	bqgSearchFormNameFieldSubmatch = regexp.MustCompile(BQG_SEARCH_FORM_NAME_FIELD_SUBMATCH)
+		bqgSearchFormFind = regexp.MustCompile(BQG_SEARCH_FORM_FIND)
+		bqgSearchFormActionMethodSubmatch = regexp.MustCompile(BQG_SEARCH_FORM_ACTION_METHOD_SUBMATCH)
+		bqgSearchFormHiddenValueSubmatch = regexp.MustCompile(BQG_SEARCH_FORM_HIDDEN_VALUE_SUBMATCH)
+		bqgSearchFormNameFieldSubmatch = regexp.MustCompile(BQG_SEARCH_FORM_NAME_FIELD_SUBMATCH)
 
-	pattern := "^(www.qu.la)|(www.xs.la)|(www.37zw.net)|(www.biquge.cc)|(www.37zw.com)|(www.xxbiquge.com)$"
-	engine.GlobalSiteSearcher.AddItem("http://zhannei.baidu.com/cse/search?s=920895234054625192&entry=1&q=%s",
-		false, false, "www.qu.la") //最后一个参数需要是你对应注册好的支持的host
-	engine.GlobalSiteSearcher.AddItem("http://zhannei.baidu.com/cse/search?s=8823758711381329060&ie=utf-8&q=%s",
-		false, false, "www.xxbiquge.com")
-	engine.GlobalSiteSearcher.AddItem("http://zhannei.baidu.com/cse/search?s=1393206249994657467&q=%s",
-		false, false, "www.xs.la")
-	engine.GlobalSiteSearcher.AddItem("http://zhannei.baidu.com/cse/search?s=14041278195252845489&entry=1&q=%s",
-		false, false, "www.biquge.cc")
-	engine.GlobalSiteSearcher.AddItem("http://zhannei.baidu.com/cse/search?s=2041213923836881982&q=%s&isNeedCheckDomain=1&jump=1",
-		true, true, "www.37zw.com") //www.37zw.net数的质量比较好,速度比较快，但是容易出现乱码问题
-	engine.RegisterExtracter(pattern, NewExtracter())
+		// 37中文网
+		//注册提取器
+		engine.RegisterExtracter("www.37zw.net", NewExtracter(SEARCH_OBJ_URL_PATTERN_37ZW_STR))
+
+		////注册搜索器
+		engine.GlobalSiteSearcher.AddItem("https://www.37zw.net/s/so.php?type=articlename&s=%s", true, true, "www.37zw.net")
+
+		//// 笔趣阁
+		//// 注册提取器
+		engine.RegisterExtracter("www.qu.la", NewExtracter(SEARCH_OBJ_URL_PATTERN_QU_STR))
+
+		//// 注册搜索器
+		engine.GlobalSiteSearcher.AddItem("https://sou.xanbhx.com/search?siteid=qula&q=%s", false, false, "www.qu.la")
+
+		// 新笔趣阁
+		// 注册提取器
+		engine.RegisterExtracter("www.xbiquge6.com", NewExtracter(SEARCH_OBJ_URL_PATTERN_XBQG_STR))
+
+		// 注册搜索器
+		engine.GlobalSiteSearcher.AddItem("https://www.xbiquge6.com/search.php?keyword=%s", true, false, "www.xbiquge6.com")
+	*/
 }

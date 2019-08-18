@@ -68,6 +68,7 @@ var globalExtracterManager map[string]Extracter
 func RegisterExtracter(regexpStr string, extracter Extracter) {
 	if _, ok := globalExtracterManager[regexpStr]; !ok {
 		globalExtracterManager[regexpStr] = extracter
+		//log.Debugf("Register Extracter: pattern=%s, extracter=%v", regexpStr, extracter)
 	}
 }
 

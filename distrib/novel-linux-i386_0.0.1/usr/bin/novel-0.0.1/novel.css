@@ -1,0 +1,41 @@
+GtkTextView, GtkWindow, GtkTreeView {
+    /*background-color: rgba(128, 10, 54, 0.4);*/
+    /*background-color: darker(rgba(128, 10, 54, 0.4));*/
+    /*background-color: lighter(rgba(128, 10, 54, 0.4));*/
+    /*background-color: alpha(lighter(rgba(128, 10, 54, 0.4)), 0.15);*/
+    /*background-image: -gtk-gradient (linear, left top, right bottom, from(#FF0000), to(#CC0000));*/
+    /*background-image: -gtk-gradient (linear, center center, center center, from(#FF0000), to(#CC0000));*/
+    /*color: #555555;*/
+
+    /*background-image: -gtk-gradient (linear, center center, center center, from(#0000FF), to(#0000EE));*/
+    /*color: white;*/
+
+    /*background-image: -gtk-gradient (linear, center center, center center, from(#DFFDFA), to(#DEECF7));*/
+    /*color: #555555;*/
+
+    /*background-image: -gtk-gradient (linear, center center, center center, from(darker(#DFFDFA)), to(darker(#DEECF7)));*/
+    /*color: #555555;*/
+    /*border-color:white;*/
+
+    /*background-image: -gtk-gradient (linear, center center, center center, from(darker(#CCCCCC)), to(#C0C0C0));*/
+    /*color: #555555;*/
+    background-color: #C7EDCC;
+    color: black;
+}
+
+GtkTextView, GtkLabel {
+    font: 方正启体简体 19;
+    /*border: 5px solid blue;*/
+    padding: 1em;
+}
+
+GtkTreeView {
+    /*padding: 5px;*/
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+GtkTreeView:hover, GtkTreeView:selected{
+    /*background-color: #C0C0C0;*/
+    background-image: -gtk-gradient (linear, center center, center center, from(#CCCCCC), to(#CCCCCC));
+}

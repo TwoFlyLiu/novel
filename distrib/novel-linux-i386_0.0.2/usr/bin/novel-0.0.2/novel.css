@@ -1,0 +1,25 @@
+textview, window, treeview{
+    background-image: none;
+    background-color: #C7EDCC;
+    /*background-color: lighter(#B0B235);*/
+    color: black;
+}
+
+textview, label{
+    /*font: 19px "方正启体简体";*/
+    font: 23px "方正启体简体";
+    padding: 1em;
+}
+
+textview {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+treeview:selected{
+    background-image: -gtk-gradient (linear, center center, center center, from(#CCCCCC), to(#CCCCCC));
+}
+
+treeview:hover{
+    background-image: -gtk-gradient (linear, center center, center center, from(#eeeeee), to(#eeeeee));
+}

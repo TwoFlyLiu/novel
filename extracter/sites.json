@@ -1,0 +1,76 @@
+{
+    "ExtracterMap": {
+        "BQGExtracter": {
+            "NovelNamePattern": "\\<div\\s+id=\"info\"[\\s\\S]+?\\<h1\\>([\\s\\S]+?)\\</h1\\>",
+            "NovelAuhtorPattern": "\\<div\\s+id=\"info\"[\\s\\S]+?\\<p\\>([\\s\\S]+?)\\</p\\>",
+            "NovelIconUrlPattern": "\\<div\\s+id=\"fmimg\"[\\s\\S]+?\\<img.*?src=\"(.*?)\"",
+            "NovelLastUpdateTimePattern": "\\<div\\s+id=\"info\"[\\s\\S]+?\\<p\\>[\\s\\S]+?\\<p\\>[\\s\\S]+?\\<p\\>([\\s\\S]+?)\\</p\\>",
+            "NovelNewestChapterNamePattern": "\\<div\\s+id=\"info\"[\\s\\S]+?\\<p\\>[\\s\\S]+?\\<p\\>[\\s\\S]+?\\<p\\>[\\s\\S]+?\\<p\\>[\\s\\S]+?\\<a[\\s\\S]+?\\>([\\s\\S]+?)\\</a\\>",
+            "NovelDescriptionPattern": "\\<div\\s+id=\"intro\"\\>([\\s\\S]+?)\\</div\\>",
+            "MenuListPattern": "\\<div\\s+id=\"list\"[\\s\\S]+?\\</div\\>", 
+            "MenuItemPattern": "\\<a[\\s\\S]+?href=\"([\\s\\S]+?)\"\\s*\\>([\\s\\S]+?)\\</a\\>",
+            "ChapterTitlePattern": "\\<div\\s+class=\"bookname\"[\\s\\S]+?\\<h1\\>([\\s\\S]+?)\\</h1\\>",
+            "ChapterContentPattern": "\\<div\\s+id=\"content\"\\s*\\>([\\s\\S]+?)\\</div\\>",
+            "SearchObjUrlPattern": "\\<a\\s+href=\"([^\"]+)\"\\s+target=\"_blank\"\\>\\s*%s\\s*\\</a\\>",
+            "BrElementPattern": "\\<br\\s*/\\>",
+            "EscapeElementPattern": "&[\\s\\S]+?;",
+            "DivElementPattern": "\\<div[\\s\\S]+?\\</div\\>",
+            "ScriptElementPattern": "\\<script[\\s\\S]+?\\</script\\>",
+            "SearchFormPattern": "\\<form\\s+id=\"bdcs-search-form\"[\\s\\S]+?\\</form\\>",
+            "SearchFormMethodAttributePattern": "\\<form\\s+id=\"bdcs-search-form\"\\s+action=\"([\\s\\S]+?)\"\\s+method=\"([\\s\\S]+?)\"",
+            "SearchFormHiddenFieldPattern": "\\<input\\s+name=\"(\\w+)\"\\s+value=\"(\\w+)\"\\s+type=\"hidden\"\\s*\\>",
+            "SearchFormShowFieldPattern": "\\<input[\\s\\S]+?name=(\\w+)[\\s\\S]+?type=\"text\""
+        },
+        "XBQGExtracter": {
+            "NovelNamePattern": "\\<div\\s+id=\"info\"[\\s\\S]+?\\<h1\\>([\\s\\S]+?)\\</h1\\>",
+            "NovelAuhtorPattern": "\\<div\\s+id=\"info\"[\\s\\S]+?\\<p\\>([\\s\\S]+?)\\</p\\>",
+            "NovelIconUrlPattern": "\\<div\\s+id=\"fmimg\"[\\s\\S]+?\\<img.*?src=\"(.*?)\"",
+            "NovelLastUpdateTimePattern": "\\<div\\s+id=\"info\"[\\s\\S]+?\\<p\\>[\\s\\S]+?\\<p\\>[\\s\\S]+?\\<p\\>([\\s\\S]+?)\\</p\\>",
+            "NovelNewestChapterNamePattern": "\\<div\\s+id=\"info\"[\\s\\S]+?\\<p\\>[\\s\\S]+?\\<p\\>[\\s\\S]+?\\<p\\>[\\s\\S]+?\\<p\\>[\\s\\S]+?\\<a[\\s\\S]+?\\>([\\s\\S]+?)\\</a\\>",
+            "NovelDescriptionPattern": "\\<div\\s+id=\"intro\"\\>([\\s\\S]+?)\\</div\\>",
+            "MenuListPattern": "\\<div\\s+id=\"list\"[\\s\\S]+?\\</div\\>", 
+            "MenuItemPattern": "\\<a[\\s\\S]+?href=\"([\\s\\S]+?)\"\\s*\\>([\\s\\S]+?)\\</a\\>",
+            "ChapterTitlePattern": "\\<div\\s+class=\"bookname\"[\\s\\S]+?\\<h1\\>([\\s\\S]+?)\\</h1\\>",
+            "ChapterContentPattern": "\\<div\\s+id=\"content\"\\s*\\>([\\s\\S]+?)\\</div\\>",
+            "SearchObjUrlPattern": "\\<a\\s+cpos=\"title\"\\s+href=\"([^\"]+)\" title=\"\\s*%s\\s*\"\\s+class=\"result-game-item-title-link\"\\s+target=\"_blank\">[^<]*\\<span\\>\\s*%[1]s\\s*</span>",
+            "BrElementPattern": "\\<br\\s*/\\>",
+            "EscapeElementPattern": "&[\\s\\S]+?;",
+            "DivElementPattern": "\\<div[\\s\\S]+?\\</div\\>",
+            "ScriptElementPattern": "\\<script[\\s\\S]+?\\</script\\>",
+            "SearchFormPattern": "\\<form\\s+id=\"bdcs-search-form\"[\\s\\S]+?\\</form\\>",
+            "SearchFormMethodAttributePattern": "\\<form\\s+id=\"bdcs-search-form\"\\s+action=\"([\\s\\S]+?)\"\\s+method=\"([\\s\\S]+?)\"",
+            "SearchFormHiddenFieldPattern": "\\<input\\s+name=\"(\\w+)\"\\s+value=\"(\\w+)\"\\s+type=\"hidden\"\\s*\\>",
+            "SearchFormShowFieldPattern": "\\<input[\\s\\S]+?name=(\\w+)[\\s\\S]+?type=\"text\""
+        }
+    },
+    "RegistrySearchList": [
+        {
+            "SearchUrlFmtStr": "https://www.37zw.net/s/so.php?type=articlename&s=%s",
+            "GBKEncoding": true,
+            "NeedEscape": true,
+            "Host": "www.37zw.net"
+        },
+        {
+            "SearchUrlFmtStr": "https://sou.xanbhx.com/search?siteid=qula&q=%s",
+            "GBKEncoding": false,
+            "NeedEscape": false,
+            "Host": "www.qu.la"
+        },
+        {
+            "SearchUrlFmtStr": "https://www.xbiquge6.com/search.php?keyword=%s",
+            "GBKEncoding": false,
+            "NeedEscape": true,
+            "Host": "www.xbiquge6.com"
+        }
+    ],
+    "RegistryExtracterList": [
+        {
+            "HostPattern": "www.37zw.net|www.qu.la",
+            "ExtracterRef": "BQGExtracter"
+        },
+        {
+            "HostPattern": "www.xbiquge6.com",
+            "ExtracterRef": "XBQGExtracter"
+        }
+    ]
+}
