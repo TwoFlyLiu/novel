@@ -174,21 +174,43 @@ func (e *ConfigExtracter) ExtractNovelAuthor(fullPage string) (author string) {
 
 // 从fullPage从提取出小说菜单列表
 // 返回以[[url1, menu1], [ur2, menu2], ...]形式返回
-func (e *ConfigExtracter) ExtractMenuList(fullPage string) (result [][]string) {
-	result = make([][]string, 0)
+func (e *ConfigExtracter) ExtractMenuList(fullPage string) (finalResult [][]string) {
+	result := make([][]string, 0)
 	menuList := e.menuListPatternFind.FindString(fullPage)
 	//fmt.Println("menuList len:", len(menuList))
 	matches := e.menuItemPatternSubMatch.FindAllStringSubmatch(menuList, -1) //返回的是[][]string
 	//fmt.Println("menuItem submatch len:", len(matches))
+
 	for _, v := range matches {
 		if len(v) > 2 {
 			menu := make([]string, 0)
+
 			menu = append(menu, v[1]) //添加的是url
 			menu = append(menu, v[2]) //添加的是章节标题
+
 			result = append(result, menu)
 		}
 
 	}
+
+	fmt.Printf("before filter menu item count: %d\n", len(result))
+	// 移除前置重复章节(类似笔趣阁缓存章节)
+	finalResult = make([][]string, 0)
+	for i := 0; i < len(result)-1; i++ {
+		repeat := false
+		for j := i + 1; j < len(result); j++ {
+			if result[i][1] == result[j][1] {
+				repeat = true
+				break
+			}
+		}
+
+		if !repeat {
+			finalResult = append(finalResult, result[i])
+		}
+	}
+	fmt.Printf("after filter menu item count: %d\n", len(finalResult))
+
 	return
 }
 
